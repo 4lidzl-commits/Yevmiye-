@@ -67,28 +67,49 @@ input{width:100%;padding:11px;font-size:16px;border-radius:10px;border:1px solid
 .wn{flex:0 0 auto;min-width:94px;border-right:1px solid var(--ln);padding-right:10px}.wn b{font-size:22px;display:block}.wn small{color:var(--mut);font-size:11px;line-height:1.35;display:block}
 .wd{flex:1;display:flex;justify-content:space-between;gap:4px;text-align:center}.wd>div{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px}.wd small{color:var(--mut);font-size:11px}.wd span{font-size:20px;line-height:1.1}
 .wxb{width:100%;margin-bottom:12px;color:var(--mut)}
+body{padding-bottom:92px}
+.tabbar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--ln);z-index:5;padding-bottom:env(safe-area-inset-bottom,0px)}
+.tbi{max-width:520px;margin:0 auto;display:flex}
+.tbt{flex:1;border:0;background:none;color:var(--mut);padding:8px 0 7px;font-size:11px;cursor:pointer}.tbt span{display:block;font-size:21px;line-height:1.2}.tbt.on{color:var(--ac);font-weight:600}
+.qk{background:var(--card);border:1px solid var(--ln);border-radius:14px;padding:12px;margin-bottom:12px}.qk small{display:block;color:var(--mut);font-size:12px}
+.qb{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:8px 0}
+.qb button{padding:14px 0;font-size:18px;font-weight:700;border-radius:12px;border:1px solid var(--ln);background:var(--bg);color:var(--tx);cursor:pointer}
+.qb button.on{background:var(--ac);color:var(--on,#fff);border-color:var(--ac)}.qb button[data-q="o"]{font-size:13px;font-weight:500}
+@media print{.tp{display:block!important}.tabbar{display:none}}
 @media print{.noprint,.sh,#lk{display:none!important}body{background:#fff;color:#000}.d,.st,.lst,.bars{border-color:#999}}
 </style>
 </head>
 <body>
 <div class="top"><span></span><h1>⚓</h1><button class="btn noprint" id="rb"></button></div>
+<div class="tp" id="t1">
 <div class="gr noprint" id="gr"></div>
 <div class="noprint" id="wx"></div>
 <div id="msg" class="noprint"></div>
-<div class="nav noprint"><button class="btn" id="pv">‹</button><b id="mt"></b><button class="btn" id="nx">›</button></div>
-<div class="hero"><button class="eye noprint" id="eye"></button><small>Bu ay net (ele geçen)</small><div class="big" id="earn"></div><small id="sub"></small><small id="fx" style="margin-top:4px;cursor:pointer"></small></div>
+<div class="nav noprint"><button class="btn pvb">‹</button><b class="mtl"></b><button class="btn nxb">›</button></div>
+<div class="hero"><button class="eye noprint" id="eye"></button><small id="hl">Bu ay net (ele geçen)</small><div class="big" id="earn"></div><small id="sub"></small><small id="fx" style="margin-top:4px;cursor:pointer"></small></div>
+<div class="qk noprint" id="qk"></div>
 <div class="al" id="al" style="display:none"></div>
-<div class="grid" id="stats"></div>
-<div class="row noprint"><button class="btn" id="wa">📤 Paylaş</button><button class="btn" id="xl">📊 Excel</button><button class="btn" id="pd">🖨 PDF</button></div>
+</div>
+<div class="tp" id="t2" style="display:none">
+<div class="nav"><button class="btn pvb noprint">‹</button><b class="mtl"></b><button class="btn nxb noprint">›</button></div>
 <div class="cal" id="cal"></div>
 <div class="lg">🔴 resmî tatil · 🔵 dini bayram · kırmızı sayı: Pazar · ✎ not var</div>
 <h2>Avans · kesinti · ek ödeme</h2>
 <div class="lst" id="mv"></div>
 <button class="btn noprint" id="am" style="width:100%;margin-top:8px">＋ Hareket ekle</button>
-<h2>Tatiller</h2>
-<div id="hol"></div>
+</div>
+<div class="tp" id="t3" style="display:none">
+<div class="nav noprint"><button class="btn pvb">‹</button><b class="mtl"></b><button class="btn nxb">›</button></div>
+<div class="grid" id="stats"></div>
+<div class="row noprint"><button class="btn" id="wa">📤 Paylaş</button><button class="btn" id="xl">📊 Excel</button><button class="btn" id="pd">🖨 PDF</button></div>
 <h2>Son 12 ay (brüt kazanç · çalışılan gün)</h2>
 <div id="chart"></div>
+</div>
+<div class="tp" id="t4" style="display:none">
+<h2 style="margin-top:4px">Tatiller</h2>
+<div id="hol"></div>
+</div>
+<div class="tabbar noprint"><div class="tbi"><button class="tbt on" data-t="1"><span>🏠</span>Ana</button><button class="tbt" data-t="2"><span>📅</span>Takvim</button><button class="tbt" data-t="3"><span>📊</span>Rapor</button><button class="tbt" data-t="4"><span>🎉</span>Tatil</button></div></div>
 <div class="sh noprint" id="sh"><div class="pn" id="pn"></div></div>
 <div id="lk"><h1>🔒 Yevmiye Defteri</h1><input id="lp" type="password" inputmode="numeric" placeholder="PIN" style="max-width:200px;text-align:center"><button class="sv" id="lb" style="max-width:200px">Aç</button><small id="le" style="color:var(--bad)"></small></div>
 
@@ -158,7 +179,7 @@ function stats(y,m){var n=new Date(y,m+1,0).getDate(),s={tot:0,gross:0,work:0,mi
 
 function render(){
  now=new Date();var sk=streaks(),s=stats(Y,M),n=new Date(Y,M+1,0).getDate(),first=(new Date(Y,M,1).getDay()+6)%7,t=ds(now);
- $("mt").textContent=AY[M]+" "+Y;
+ Array.prototype.forEach.call(document.querySelectorAll(".mtl"),function(e){e.textContent=AY[M]+" "+Y});$("hl").textContent=(Y===now.getFullYear()&&M===now.getMonth())?"Bu ay net (ele geçen)":AY[M]+" "+Y+" net (ele geçen)";
  $("rb").textContent="⚙";
  $("earn").textContent=tm(s.net);
  $("sub").textContent="Brüt "+tm(s.gross)+" ("+fn(s.tot)+" yev.)"+(s.ek?" · +"+tm(s.ek)+" ek":"")+(s.ke?" · −"+tm(s.ke)+" kesinti":"")+(s.av?" · −"+tm(s.av)+" avans":"");
@@ -176,7 +197,7 @@ function render(){
  $("cal").innerHTML=h;
  var pre=Y+"-"+pad(M+1),ms=S.moves.filter(function(x){return x.date.slice(0,7)===pre}).sort(function(a,b){return a.date<b.date?-1:1});
  $("mv").innerHTML=ms.length?ms.map(function(x){var p=x.kind==="ek";return '<div><span>'+(+x.date.slice(8))+" "+AY[M].slice(0,3)+" · "+KD[x.kind]+(x.note?'<small>'+esc(x.note)+'</small>':'')+'</span><span style="color:var(--'+(p?"ok":"bad")+')"><b>'+(p?"+":"−")+tm(x.amt)+'</b> <button class="x noprint" data-id="'+x.id+'">✕</button></span></div>'}).join(""):'<div><span style="color:var(--mut)">Bu ay kayıt yok</span></div>';
- renderHol();renderChart();renderAlerts(s,sk);renderFx(s);renderWx();$("eye").textContent=S.hide?"🙈":"👁";$("gr").innerHTML='<small>'+now.getDate()+" "+AY[now.getMonth()]+" "+GNF[now.getDay()]+'</small>'+esc(greet(sk));
+ renderHol();renderChart();renderAlerts(s,sk);renderFx(s);renderWx();renderQuick();$("eye").textContent=S.hide?"🙈":"👁";$("gr").innerHTML='<small>'+now.getDate()+" "+AY[now.getMonth()]+" "+GNF[now.getDay()]+'</small>'+esc(greet(sk));
 }
 function renderHol(){
  var t=ds(now),ks=Object.keys(H).sort().filter(function(k){return k>=t&&!H[k].half}),out="";
@@ -217,7 +238,7 @@ function renderAlerts(s,sk){var a=[],t=ds(now),cur=(Y===now.getFullYear()&&M===n
  if(sk.cur>=7)a.push("🔥 "+sk.cur+" gündür aralıksız işe geliyorsun");
  var nk=Object.keys(H).sort().filter(function(k){return k>=t&&!H[k].half})[0];
  if(nk&&diff(nk)<=3)a.push("🎉 "+(diff(nk)===0?"Bugün":diff(nk)+" gün sonra")+": "+H[nk].n.replace(/ \d\. Gün/,""));
- var el=$("al");el.style.display=a.length?"":"none";el.innerHTML=a.slice(0,4).map(function(x){return "<div>"+esc(x)+"</div>"}).join("")}
+ var el=$("al");el.style.display=a.length?"":"none";el.innerHTML=a.slice(0,2).map(function(x){return "<div>"+esc(x)+"</div>"}).join("")}
 function renderFx(s){var f=S.fx,el=$("fx");
  if(!f||!f.eur){el.textContent="€ kuru alınamadı (internet yok olabilir), dokununca tekrar dener";return}
  var tt=new Date(f.t),hh=pad(tt.getHours())+":"+pad(tt.getMinutes());
@@ -308,6 +329,10 @@ function openWx(){
   navigator.geolocation.getCurrentPosition(function(p){setWx({n:"Konumum",lat:Math.round(p.coords.latitude*100)/100,lon:Math.round(p.coords.longitude*100)/100})},function(){alert("Konum alınamadı, şehirlerden seçebilirsin")},{timeout:10000})};
  if(S.wxc)$("wo").onclick=function(){S.wxc=null;S.wx=null;S.wxNo=true;save();render();closeSheet()}}
 
+function renderQuick(){var t=ds(now),v=S.days[t],h=H[t];
+ $("qk").innerHTML='<small>Bugün · '+now.getDate()+' '+AY[now.getMonth()]+' '+GNF[now.getDay()]+(h&&!h.half?' · '+esc(h.n):'')+'</small><div class="qb">'+[0,1,1.5,2].map(function(x){return '<button data-q="'+x+'"'+(v===x?' class="on"':'')+'>'+fn(x)+'</button>'}).join("")+'<button data-q="o">Diğer</button></div><small>'+(typeof v==="number"?"Girildi: "+fn(v)+" yevmiye ✓":"Bugün henüz girilmedi")+'</small>'}
+function showTab(n){for(var i=1;i<=4;i++)$("t"+i).style.display=i===n?"":"none";
+ Array.prototype.forEach.call(document.querySelectorAll(".tbt"),function(b){b.classList.toggle("on",+b.dataset.t===n)});window.scrollTo(0,0)}
 var WEL=Date.now();
 var GNF=["Pazar","Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi"];
 var WD=[["İyi pazarlar, bugün dinlenme günü 😌","Pazar keyfi, ailenle vakit geçir","Yarın yeni hafta başlıyor, bugün dinlen","Pazar sefası, çayını iç, rahatla ☕"],
@@ -367,12 +392,16 @@ var hid=0;document.addEventListener("visibilitychange",function(){if(document.hi
 $("cal").onclick=function(e){var b=e.target.closest("[data-d]");if(b)openDay(+b.dataset.d)};
 $("mv").onclick=function(e){var b=e.target.closest("[data-id]");if(!b)return;if(confirm("Bu kayıt silinsin mi?")){S.moves=S.moves.filter(function(x){return String(x.id)!==b.dataset.id});save();render()}};
 $("am").onclick=openMove;$("rb").onclick=function(){openSet()};
-$("pv").onclick=function(){M--;if(M<0){M=11;Y--}render()};
-$("nx").onclick=function(){M++;if(M>11){M=0;Y++}render()};
+Array.prototype.forEach.call(document.querySelectorAll(".pvb"),function(b){b.onclick=function(){M--;if(M<0){M=11;Y--}render()}});
+Array.prototype.forEach.call(document.querySelectorAll(".nxb"),function(b){b.onclick=function(){M++;if(M>11){M=0;Y++}render()}});
 $("wa").onclick=function(){window.open("https://wa.me/?text="+encodeURIComponent(shareTxt()),"_blank")};
 $("xl").onclick=function(){dl("yevmiye-"+Y+"-"+pad(M+1)+".csv",csv(),"text/csv;charset=utf-8")};
 $("pd").onclick=function(){window.print()};
 
+Array.prototype.forEach.call(document.querySelectorAll(".tbt"),function(b){b.onclick=function(){showTab(+b.dataset.t)}});
+$("qk").onclick=function(e){var b=e.target.closest("[data-q]");if(!b)return;
+ if(b.dataset.q==="o"){Y=now.getFullYear();M=now.getMonth();render();openDay(now.getDate());return}
+ S.days[ds(now)]=parseFloat(b.dataset.q);save();render()};
 $("eye").onclick=function(){S.hide=!S.hide;save();render()};
 $("fx").onclick=fetchFx;
 document.addEventListener("visibilitychange",function(){if(!document.hidden){if(!hid||Date.now()-hid>12e4){WEL=Date.now();setTimeout(render,8200)}render();if(S.wxc&&navigator.onLine&&wxOld())fetchWx();if(navigator.onLine&&fxOld())fetchFx()}});
