@@ -17,7 +17,7 @@ h1{font-size:18px;margin:0}h2{font-size:14px;color:var(--mut);margin:18px 0 6px;
 .top{margin-bottom:6px}.nav{margin-bottom:8px}.nav b{font-size:17px}.row{margin-bottom:12px}.row .btn{flex:1}
 .btn{background:var(--card);color:var(--tx);border:1px solid var(--ln);border-radius:10px;padding:9px 12px;font-size:14px;cursor:pointer}
 #msg{font-size:12px;color:var(--mut);min-height:4px;margin-bottom:6px}
-.hero{background:var(--ac);color:#fff;border-radius:16px;padding:16px;margin-bottom:12px}
+.hero{background:var(--ac);color:var(--on,#fff);border-radius:16px;padding:16px;margin-bottom:12px}
 .hero small{opacity:.9;display:block}.hero .big{font-size:32px;font-weight:700;margin:2px 0}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
 .st{background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:10px 12px}
@@ -53,11 +53,14 @@ h1{font-size:18px;margin:0}h2{font-size:14px;color:var(--mut);margin:18px 0 6px;
 .ch button{padding:14px 0;font-size:18px;font-weight:700;border-radius:12px;border:1px solid var(--ln);background:var(--bg);color:var(--tx);cursor:pointer}
 .ch button.x{font-size:14px;font-weight:500;color:var(--mut)}
 input{width:100%;padding:11px;font-size:16px;border-radius:10px;border:1px solid var(--ln);background:var(--bg);color:var(--tx);margin-bottom:8px}
-.sv{width:100%;padding:12px;border:0;border-radius:10px;background:var(--ac);color:#fff;font-size:16px;cursor:pointer;margin-bottom:8px}
+.sv{width:100%;padding:12px;border:0;border-radius:10px;background:var(--ac);color:var(--on,#fff);font-size:16px;cursor:pointer;margin-bottom:8px}
 .sv.g{background:var(--bg);color:var(--tx);border:1px solid var(--ln)}
 .seg{display:flex;gap:6px;margin-bottom:8px}.seg button{flex:1;padding:9px 2px;font-size:13px;border-radius:10px;border:1px solid var(--ln);background:var(--bg);color:var(--tx)}
-.seg button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.seg button.on{background:var(--ac);color:var(--on,#fff);border-color:var(--ac)}
 .rr{display:flex;gap:8px;align-items:center;margin-bottom:6px}.rr span{flex:0 0 120px;font-size:13px;color:var(--mut)}.rr input{margin:0}
+.hero{position:relative}.eye{position:absolute;top:10px;right:10px;background:#0003;border:0;color:var(--on,#fff);border-radius:10px;padding:6px 10px;font-size:16px;cursor:pointer}
+.al{background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:4px 12px;margin-bottom:12px;font-size:14px}.al div{padding:7px 0;border-bottom:1px solid var(--ln)}.al div:last-child{border:0}
+.tg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}.tb{border:2px solid var(--ln);border-radius:12px;padding:6px;cursor:pointer;font-size:11px;line-height:1.2}.tb.on{border-color:var(--ac)}.tb i{display:block;height:22px;border-radius:6px;margin-bottom:5px}
 @media print{.noprint,.sh,#lk{display:none!important}body{background:#fff;color:#000}.d,.st,.lst,.bars{border-color:#999}}
 </style>
 </head>
@@ -65,7 +68,8 @@ input{width:100%;padding:11px;font-size:16px;border-radius:10px;border:1px solid
 <div class="top"><h1>⚓ Yevmiye Defteri</h1><button class="btn noprint" id="rb"></button></div>
 <div id="msg" class="noprint"></div>
 <div class="nav noprint"><button class="btn" id="pv">‹</button><b id="mt"></b><button class="btn" id="nx">›</button></div>
-<div class="hero"><small>Bu ay net (ele geçen)</small><div class="big" id="earn"></div><small id="sub"></small></div>
+<div class="hero"><button class="eye noprint" id="eye"></button><small>Bu ay net (ele geçen)</small><div class="big" id="earn"></div><small id="sub"></small><small id="fx" style="margin-top:4px;cursor:pointer"></small></div>
+<div class="al" id="al" style="display:none"></div>
 <div class="grid" id="stats"></div>
 <div class="row noprint"><button class="btn" id="wa">📤 Paylaş</button><button class="btn" id="xl">📊 Excel</button><button class="btn" id="pd">🖨 PDF</button></div>
 <div class="cal" id="cal"></div>
@@ -89,7 +93,7 @@ var KD={ek:"Ek ödeme",avans:"Avans / borç",kesinti:"Kesinti"};
 function load(){var s=null;try{s=JSON.parse(localStorage.getItem(KEY))}catch(e){}
  if(!s)s={};
  s.rates=(s.rates&&s.rates.length)?s.rates:[{from:"2000-01-01",rate:0}];
- s.days=s.days||{};s.notes=s.notes||{};s.moves=s.moves||[];s.pin=s.pin||"";s.lastBackup=s.lastBackup||0;return s}
+ s.days=s.days||{};s.notes=s.notes||{};s.moves=s.moves||[];s.pin=s.pin||"";s.lastBackup=s.lastBackup||0;s.hide=!!s.hide;s.theme=s.theme||"auto";s.fx=s.fx||null;return s}
 var S=load(),now=new Date(),Y=now.getFullYear(),M=now.getMonth(),sel=0;
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){$("msg").textContent="Kaydedilemedi: tarayıcı depolaması kapalı ya da dolu"}}
 function pad(n){return String(n).padStart(2,"0")}
@@ -100,6 +104,30 @@ function addDays(k,n){var d=new Date(utc(k)+n*864e5);return d.getUTCFullYear()+"
 function diff(k){return Math.round((utc(k)-utc(ds(now)))/864e5)}
 function fmtD(k){var p=k.split("-");return (+p[2])+" "+AY[+p[1]-1]+" "+p[0]}
 function tl(n){return "₺"+Math.round(n).toLocaleString("tr-TR")}
+function T(n,d,bg,cd,tx,mu,ac,on,ok,bad,bl,ln){return{n:n,d:d,bg:bg,cd:cd,tx:tx,mu:mu,ac:ac,on:on,ok:ok,bad:bad,bl:bl,ln:ln}}
+var TH={
+ auto:T("Otomatik",0,"#f4f1ea","#ffffff","#1d1d1b","#7a766c","#c2410c","#ffffff","#15803d","#b91c1c","#2563eb","#e5e0d4"),
+ tersane:T("Tersane",0,"#f4f1ea","#ffffff","#1d1d1b","#7a766c","#c2410c","#ffffff","#15803d","#b91c1c","#2563eb","#e5e0d4"),
+ gece:T("Gece mavisi",1,"#0f172a","#1e293b","#e2e8f0","#94a3b8","#38bdf8","#0f172a","#4ade80","#f87171","#60a5fa","#334155"),
+ orman:T("Orman yeşili",0,"#eef3ee","#ffffff","#14231a","#6b7a6f","#166534","#ffffff","#15803d","#b91c1c","#2563eb","#d5e0d6"),
+ altin:T("Siyah altın",1,"#0b0b0b","#1a1a1a","#f5f1e6","#a39e90","#d4a017","#1a1a1a","#4ade80","#f87171","#60a5fa","#333333"),
+ turkuaz:T("Turkuaz",0,"#eaf4f4","#ffffff","#10302e","#5f7b79","#0f766e","#ffffff","#15803d","#b91c1c","#2563eb","#cfe3e2"),
+ mor:T("Mor",0,"#f3f0fa","#ffffff","#1e1433","#74698c","#6d28d9","#ffffff","#15803d","#b91c1c","#2563eb","#ddd6f0"),
+ iosa:T("iOS açık",0,"#f2f2f7","#ffffff","#000000","#8e8e93","#007aff","#ffffff","#34c759","#ff3b30","#5856d6","#e5e5ea"),
+ iosk:T("iOS koyu",1,"#000000","#1c1c1e","#ffffff","#8e8e93","#0a84ff","#ffffff","#30d158","#ff453a","#bf5af2","#38383a"),
+ sade:T("Sade beyaz",0,"#ffffff","#f5f5f5","#111111","#777777","#111111","#ffffff","#16a34a","#dc2626","#2563eb","#e8e8e8"),
+ lacivert:T("Lacivert",0,"#f1f5f9","#ffffff","#0f172a","#64748b","#1e3a8a","#ffffff","#15803d","#b91c1c","#2563eb","#dbe3ee"),
+ kum:T("Kum",0,"#faf6f0","#fffdf9","#2a2118","#8a7b69","#b45309","#ffffff","#15803d","#b91c1c","#2563eb","#eadfce"),
+ gul:T("Gül",0,"#fdf2f4","#ffffff","#3b1020","#8c6272","#be185d","#ffffff","#15803d","#b91c1c","#2563eb","#f3d9e0")
+};
+var MAIN=["auto","tersane","gece","orman","altin","turkuaz","mor"],EXTRA=["iosa","iosk","sade","lacivert","kum","gul"];
+var TV={"--bg":"bg","--card":"cd","--tx":"tx","--mut":"mu","--ac":"ac","--on":"on","--ok":"ok","--bad":"bad","--bl":"bl","--ln":"ln"};
+function applyTheme(){var r=document.documentElement.style,m=document.querySelector('meta[name="theme-color"]'),t=S.theme!=="auto"&&TH[S.theme];
+ Object.keys(TV).forEach(function(v){if(t)r.setProperty(v,t[TV[v]]);else r.removeProperty(v)});
+ r.colorScheme=t?(t.d?"dark":"light"):"";
+ if(m)m.setAttribute("content",t?t.bg:"#c2410c")}
+function thBtns(l){return l.map(function(id){var t=TH[id];return '<button class="tb'+(S.theme===id?" on":"")+'" data-th="'+id+'" style="background:'+t.bg+';color:'+t.tx+'"><i style="background:'+t.ac+'"></i>'+t.n+'</button>'}).join("")}
+function tm(n){return S.hide?"₺ ••••":tl(n)}
 function fn(n){return String(Math.round(n*100)/100).replace(".",",")}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 function rateFor(k){var r=0,b="";S.rates.forEach(function(x){if(x.from<=k&&x.from>=b){b=x.from;r=x.rate}});return r}
@@ -121,12 +149,12 @@ function stats(y,m){var n=new Date(y,m+1,0).getDate(),s={tot:0,gross:0,work:0,mi
  s.net=s.gross+s.ek-s.av-s.ke;return s}
 
 function render(){
- var s=stats(Y,M),n=new Date(Y,M+1,0).getDate(),first=(new Date(Y,M,1).getDay()+6)%7,t=ds(now);
+ var sk=streaks(),s=stats(Y,M),n=new Date(Y,M+1,0).getDate(),first=(new Date(Y,M,1).getDay()+6)%7,t=ds(now);
  $("mt").textContent=AY[M]+" "+Y;
- $("rb").textContent="⚙ "+tl(rateFor(t));
- $("earn").textContent=tl(s.net);
- $("sub").textContent="Brüt "+tl(s.gross)+" ("+fn(s.tot)+" yev.)"+(s.ek?" · +"+tl(s.ek)+" ek":"")+(s.ke?" · −"+tl(s.ke)+" kesinti":"")+(s.av?" · −"+tl(s.av)+" avans":"");
- $("stats").innerHTML=[["Toplam yevmiye",fn(s.tot)],["Çalışılan gün",s.work],["Gelinmeyen gün",s.miss],["Mesaili gün (1’den fazla)",s.ot],["Pazar/tatil çalışma",s.sh+" gün · "+fn(s.shY)+" yev."],["Günlük ortalama",fn(s.work?s.tot/s.work:0)],["Girilmemiş gün",s.empty],["Avans + kesinti",tl(s.av+s.ke)]]
+ $("rb").textContent="⚙";
+ $("earn").textContent=tm(s.net);
+ $("sub").textContent="Brüt "+tm(s.gross)+" ("+fn(s.tot)+" yev.)"+(s.ek?" · +"+tm(s.ek)+" ek":"")+(s.ke?" · −"+tm(s.ke)+" kesinti":"")+(s.av?" · −"+tm(s.av)+" avans":"");
+ $("stats").innerHTML=[["Toplam yevmiye",fn(s.tot)],["Çalışılan gün",s.work],["Gelinmeyen gün",s.miss],["Mesaili gün (1’den fazla)",s.ot],["Pazar/tatil çalışma",s.sh+" gün · "+fn(s.shY)+" yev."],["Günlük ortalama",fn(s.work?s.tot/s.work:0)],["Girilmemiş gün",s.empty],["Avans + kesinti",tm(s.av+s.ke)],["Seri 🔥",sk.cur+" gün · en uzun "+sk.best]]
   .map(function(a){return '<div class="st"><small>'+a[0]+'</small><b>'+a[1]+'</b></div>'}).join("");
  var h=GN.map(function(g){return '<div class="dn">'+g+'</div>'}).join("");
  for(var i=0;i<first;i++)h+='<button class="d e"></button>';
@@ -139,8 +167,8 @@ function render(){
   h+='<button class="'+c+'" data-d="'+d+'">'+d+'<span>'+(typeof v==="number"?fn(v):"·")+'</span></button>'}
  $("cal").innerHTML=h;
  var pre=Y+"-"+pad(M+1),ms=S.moves.filter(function(x){return x.date.slice(0,7)===pre}).sort(function(a,b){return a.date<b.date?-1:1});
- $("mv").innerHTML=ms.length?ms.map(function(x){var p=x.kind==="ek";return '<div><span>'+(+x.date.slice(8))+" "+AY[M].slice(0,3)+" · "+KD[x.kind]+(x.note?'<small>'+esc(x.note)+'</small>':'')+'</span><span style="color:var(--'+(p?"ok":"bad")+')"><b>'+(p?"+":"−")+tl(x.amt)+'</b> <button class="x noprint" data-id="'+x.id+'">✕</button></span></div>'}).join(""):'<div><span style="color:var(--mut)">Bu ay kayıt yok</span></div>';
- renderHol();renderChart();
+ $("mv").innerHTML=ms.length?ms.map(function(x){var p=x.kind==="ek";return '<div><span>'+(+x.date.slice(8))+" "+AY[M].slice(0,3)+" · "+KD[x.kind]+(x.note?'<small>'+esc(x.note)+'</small>':'')+'</span><span style="color:var(--'+(p?"ok":"bad")+')"><b>'+(p?"+":"−")+tm(x.amt)+'</b> <button class="x noprint" data-id="'+x.id+'">✕</button></span></div>'}).join(""):'<div><span style="color:var(--mut)">Bu ay kayıt yok</span></div>';
+ renderHol();renderChart();renderAlerts(s,sk);renderFx(s);$("eye").textContent=S.hide?"🙈":"👁";
 }
 function renderHol(){
  var t=ds(now),ks=Object.keys(H).sort().filter(function(k){return k>=t&&!H[k].half}),out="";
@@ -156,8 +184,38 @@ function renderChart(){
  var a=[],mx=1,i,yy,mm;
  for(i=11;i>=0;i--){yy=Y;mm=M-i;while(mm<0){mm+=12;yy--}var s=stats(yy,mm);a.push([mm,s,i===0]);if(s.gross>mx)mx=s.gross}
  var yt=0,yg=0;for(i=0;i<12;i++){var q=stats(Y,i);yt+=q.tot;yg+=q.gross}
- $("chart").innerHTML='<div class="bars">'+a.map(function(x){return '<div class="bc'+(x[2]?" cur":"")+'"><small>'+(x[1].gross?fn(x[1].gross/1000)+"b":"")+'</small><div class="br" style="height:'+Math.max(Math.round(x[1].gross/mx*80),2)+'%"></div><small>'+AY[x[0]].slice(0,3)+'</small><small>'+(x[1].work||"")+'</small></div>'}).join("")+'</div><div class="lg" style="margin-top:6px">'+Y+' toplamı: '+fn(yt)+' yevmiye · '+tl(yg)+' brüt (b = bin ₺)</div>'}
+ $("chart").innerHTML='<div class="bars">'+a.map(function(x){return '<div class="bc'+(x[2]?" cur":"")+'"><small>'+(x[1].gross&&!S.hide?fn(x[1].gross/1000)+"b":"")+'</small><div class="br" style="height:'+Math.max(Math.round(x[1].gross/mx*80),2)+'%"></div><small>'+AY[x[0]].slice(0,3)+'</small><small>'+(x[1].work||"")+'</small></div>'}).join("")+'</div><div class="lg" style="margin-top:6px">'+Y+' toplamı: '+fn(yt)+' yevmiye · '+tm(yg)+' brüt'+(S.hide?'':' (b = bin ₺)')+'</div>'}
 
+function workday(k){var d=new Date(utc(k));return d.getUTCDay()!==0&&!(H[k]&&!H[k].half)}
+function streaks(){var ks=Object.keys(S.days).filter(function(k){return typeof S.days[k]==="number"}).sort();if(!ks.length)return{cur:0,best:0};
+ var t=ds(now),k=ks[0],run=0,best=0;
+ while(k<=t){var v=S.days[k];
+  if(typeof v==="number"){if(v>0){run++;if(run>best)best=run}else run=0}
+  else if(workday(k)&&k<t)run=0;
+  k=addDays(k,1)}
+ return{cur:run,best:best}}
+function renderAlerts(s,sk){var a=[],t=ds(now),cur=(Y===now.getFullYear()&&M===now.getMonth());
+ if(rateFor(t)===0)a.push("⚠️ Günlük ücret girilmemiş, ⚙ menüsünden gir");
+ if(s.empty>0)a.push("📝 "+s.empty+" gün henüz girilmemiş");
+ if(cur){var py=M?Y:Y-1,pm=M?M-1:11,dd=now.getDate(),w=0,pw=0;
+  for(var d=1;d<=dd;d++){if(S.days[key(Y,M,d)]>0)w++;if(S.days[key(py,pm,d)]>0)pw++}
+  if(pw-w>=2)a.push("📉 Geçen ayın aynı gününe göre "+(pw-w)+" gün eksiksin");
+  else if(w-pw>=2)a.push("📈 Geçen ayın aynı gününe göre "+(w-pw)+" gün fazlasın")}
+ if(s.miss>=4)a.push("❌ Bu ay "+s.miss+" gün gelmedin");
+ if(s.sh>0)a.push("🗓 Pazar/tatil günü "+s.sh+" gün çalıştın, ücretin buna göre ödenmiş mi bak");
+ if(s.work>=5&&s.ot>=s.work/2)a.push("⏱ Bu ay çalıştığın günlerin yarıdan fazlasında mesai yaptın");
+ if(s.gross>0&&(s.av+s.ke)>s.gross/2)a.push("💸 Avans ve kesintiler brüt kazancın yarısını geçti");
+ if(sk.cur>=7)a.push("🔥 "+sk.cur+" gündür aralıksız işe geliyorsun");
+ var nk=Object.keys(H).sort().filter(function(k){return k>=t&&!H[k].half})[0];
+ if(nk&&diff(nk)<=3)a.push("🎉 "+(diff(nk)===0?"Bugün":diff(nk)+" gün sonra")+": "+H[nk].n.replace(/ \d\. Gün/,""));
+ var el=$("al");el.style.display=a.length?"":"none";el.innerHTML=a.slice(0,4).map(function(x){return "<div>"+esc(x)+"</div>"}).join("")}
+function renderFx(s){var f=S.fx,el=$("fx");
+ if(!f||!f.eur){el.textContent="€ kuru alınamadı (internet yok olabilir), dokununca tekrar dener";return}
+ var tt=new Date(f.t),hh=pad(tt.getHours())+":"+pad(tt.getMinutes());
+ el.textContent=(S.hide?"≈ € ••••":"≈ €"+Math.round(s.net/f.eur).toLocaleString("tr-TR"))+" · 1 € = ₺"+String(Math.round(f.eur*100)/100).replace(".",",")+" ("+(ds(tt)===ds(now)?"bugün "+hh:fmtD(ds(tt)))+")"}
+function fetchFx(){var u=["https://open.er-api.com/v6/latest/EUR","https://api.frankfurter.dev/v1/latest?base=EUR&symbols=TRY"];
+ (function n(i){if(i>=u.length)return;fetch(u[i]).then(function(r){return r.json()}).then(function(j){var v=j.rates&&j.rates.TRY;if(!(v>0))throw 0;S.fx={eur:v,t:Date.now()};save();render()}).catch(function(){n(i+1)})})(0)}
+function fxOld(){return !S.fx||Date.now()-S.fx.t>36e5}
 function openSheet(h){$("pn").innerHTML=h;$("sh").classList.add("on")}
 function closeSheet(){$("sh").classList.remove("on")}
 $("sh").onclick=function(e){if(e.target===this)closeSheet()};
@@ -181,17 +239,19 @@ function openSet(first){
  var rows=S.rates.slice().sort(function(a,b){return a.from<b.from?-1:1});
  openSheet('<h3>Yevmiye ücreti'+(first?' — önce günlük ücretini gir':'')+'</h3>'+rows.map(function(r,i){return '<div class="rr"><span>'+(i===0?"Başlangıç":fmtD(r.from)+"’den itibaren")+'</span><input type="number" inputmode="decimal" data-f="'+r.from+'" value="'+(r.rate||"")+'" placeholder="₺">'+(i?'<button class="x" data-r="'+r.from+'">✕</button>':'')+'</div>'}).join("")
  +'<h3 style="margin-top:14px">Zam / yeni ücret ekle</h3><input id="zd" type="date" value="'+ds(now)+'"><input id="za" type="number" inputmode="decimal" placeholder="Yeni günlük ücret ₺"><button class="sv" id="zk">Zammı ekle</button>'
+ +'<h3 style="margin-top:14px">Tema</h3><div class="tg">'+thBtns(MAIN)+'</div><h3 style="margin-top:4px">Ekstra temalar</h3><div class="tg">'+thBtns(EXTRA)+'</div>'
  +'<h3 style="margin-top:14px">Yedek</h3><button class="sv g" id="bk">💾 Yedek al (dosya)</button><button class="sv g" id="rs">📂 Yedekten geri yükle</button><input id="rf" type="file" accept=".json,application/json" style="display:none">'
  +'<h3 style="margin-top:14px">Kilit</h3><button class="sv g" id="pn1">'+(S.pin?"PIN’i değiştir":"PIN koy")+'</button>'+(S.pin?'<button class="sv g" id="pn2">PIN’i kaldır</button>':'')
  +'<p class="lg">PIN sadece başkası telefonu eline alınca göz atmasın diyedir, tam güvenlik sağlamaz.</p><button class="sv" id="ok">Tamam</button>');
  qa("[data-f]",function(i){i.onchange=function(){S.rates.forEach(function(r){if(r.from===i.dataset.f)r.rate=parseFloat(i.value)||0});save();render()}});
  qa("[data-r]",function(b){b.onclick=function(){S.rates=S.rates.filter(function(r){return r.from!==b.dataset.r});save();render();openSet()}});
+ qa("[data-th]",function(b){b.onclick=function(){S.theme=b.dataset.th;save();applyTheme();render();qa("[data-th]",function(x){x.classList.toggle("on",x===b)})}});
  $("zk").onclick=function(){var d=$("zd").value,a=parseFloat($("za").value);if(!d||!(a>0))return;
   S.rates=S.rates.filter(function(r){return r.from!==d});S.rates.push({from:d,rate:a});save();render();openSet()};
  $("bk").onclick=function(){S.lastBackup=Date.now();save();dl("yevmiye-yedek-"+ds(now)+".json",JSON.stringify(S),"application/json");$("msg").textContent=""};
  $("rs").onclick=function(){$("rf").click()};
  $("rf").onchange=function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var o=JSON.parse(r.result);if(!o.days||!o.rates)throw 0;
-  if(!confirm("Mevcut veriler silinip yedekteki veriler yüklenecek. Emin misin?"))return;S=o;save();S=load();closeSheet();render()}catch(e){alert("Bu dosya geçerli bir yedek değil")}};r.readAsText(f)};
+  if(!confirm("Mevcut veriler silinip yedekteki veriler yüklenecek. Emin misin?"))return;S=o;save();S=load();applyTheme();closeSheet();render()}catch(e){alert("Bu dosya geçerli bir yedek değil")}};r.readAsText(f)};
  $("pn1").onclick=function(){var p=prompt("Yeni PIN (en az 4 rakam)");if(p&&/^\d{4,}$/.test(p)){S.pin=hp(p);save();openSet()}else if(p)alert("En az 4 rakam gir")};
  if(S.pin)$("pn2").onclick=function(){if(confirm("PIN kaldırılsın mı?")){S.pin="";save();openSet()}};
  $("ok").onclick=closeSheet}
@@ -220,8 +280,13 @@ $("wa").onclick=function(){window.open("https://wa.me/?text="+encodeURIComponent
 $("xl").onclick=function(){dl("yevmiye-"+Y+"-"+pad(M+1)+".csv",csv(),"text/csv;charset=utf-8")};
 $("pd").onclick=function(){window.print()};
 
+$("eye").onclick=function(){S.hide=!S.hide;save();render()};
+$("fx").onclick=fetchFx;
+document.addEventListener("visibilitychange",function(){if(!document.hidden&&navigator.onLine&&fxOld())fetchFx()});
+applyTheme();
 if(S.pin)lock();
 render();
+if(navigator.onLine&&fxOld())fetchFx();
 if(S.rates.length===1&&!S.rates[0].rate)openSet(true);
 else if(S.lastBackup&&Date.now()-S.lastBackup>30*864e5)$("msg").textContent="Son yedekten 30 günden fazla geçti, ⚙ menüsünden yedek al";
 else if(!S.lastBackup&&Object.keys(S.days).length>20)$("msg").textContent="Henüz yedek almadın, ⚙ menüsünden yedek al";
