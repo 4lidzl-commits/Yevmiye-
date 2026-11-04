@@ -61,12 +61,13 @@ input{width:100%;padding:11px;font-size:16px;border-radius:10px;border:1px solid
 .hero{position:relative}.eye{position:absolute;top:10px;right:10px;background:#0003;border:0;color:var(--on,#fff);border-radius:10px;padding:6px 10px;font-size:16px;cursor:pointer}
 .al{background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:4px 12px;margin-bottom:12px;font-size:14px}.al div{padding:7px 0;border-bottom:1px solid var(--ln)}.al div:last-child{border:0}
 .tg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}.tb{border:2px solid var(--ln);border-radius:12px;padding:6px;cursor:pointer;font-size:11px;line-height:1.2}.tb.on{border-color:var(--ac)}.tb i{display:block;height:22px;border-radius:6px;margin-bottom:5px}
-.gr{font-size:17px;font-weight:600;line-height:1.35;margin:0 0 12px}.gr small{display:block;font-size:12px;font-weight:400;color:var(--mut);margin-bottom:2px}
+.gr{font-size:17px;font-weight:600;line-height:1.35;margin:6px 0 14px;text-align:center}.gr small{display:block;font-size:12px;font-weight:400;color:var(--mut);margin-bottom:2px}
+.top{display:grid;grid-template-columns:1fr auto 1fr;align-items:center}.top h1{font-size:28px;line-height:1}.top .btn{justify-self:end}
 @media print{.noprint,.sh,#lk{display:none!important}body{background:#fff;color:#000}.d,.st,.lst,.bars{border-color:#999}}
 </style>
 </head>
 <body>
-<div class="top"><h1>⚓ Yevmiye Defteri</h1><button class="btn noprint" id="rb"></button></div>
+<div class="top"><span></span><h1>⚓</h1><button class="btn noprint" id="rb"></button></div>
 <div class="gr noprint" id="gr"></div>
 <div id="msg" class="noprint"></div>
 <div class="nav noprint"><button class="btn" id="pv">‹</button><b id="mt"></b><button class="btn" id="nx">›</button></div>
@@ -146,7 +147,7 @@ DB.forEach(function(b){addH(b[1],b[0]+" Arifesi",{half:1,dini:1,g:b[0]});for(var
 function stats(y,m){var n=new Date(y,m+1,0).getDate(),s={tot:0,gross:0,work:0,miss:0,ot:0,empty:0,sh:0,shY:0,ek:0,av:0,ke:0},t=ds(now),pre=y+"-"+pad(m+1);
  for(var d=1;d<=n;d++){var k=key(y,m,d),v=S.days[k],su=new Date(y,m,d).getDay()===0,h=H[k]&&!H[k].half;
   if(typeof v==="number"){s.tot+=v;s.gross+=v*rateFor(k);if(v>0){s.work++;if(v>1)s.ot++;if(su||h){s.sh++;s.shY+=v}}else s.miss++}
-  else if(k<=t&&!su&&!h)s.empty++}
+  else if((k<t||(k===t&&now.getHours()>=17))&&!su&&!h)s.empty++}
  S.moves.forEach(function(x){if(x.date.slice(0,7)===pre){if(x.kind==="ek")s.ek+=x.amt;else if(x.kind==="avans")s.av+=x.amt;else s.ke+=x.amt}});
  s.net=s.gross+s.ek-s.av-s.ke;return s}
 
@@ -156,7 +157,7 @@ function render(){
  $("rb").textContent="⚙";
  $("earn").textContent=tm(s.net);
  $("sub").textContent="Brüt "+tm(s.gross)+" ("+fn(s.tot)+" yev.)"+(s.ek?" · +"+tm(s.ek)+" ek":"")+(s.ke?" · −"+tm(s.ke)+" kesinti":"")+(s.av?" · −"+tm(s.av)+" avans":"");
- $("stats").innerHTML=[["Toplam yevmiye",fn(s.tot)],["Çalışılan gün",s.work],["Gelinmeyen gün",s.miss],["Mesaili gün (1’den fazla)",s.ot],["Pazar/tatil çalışma",s.sh+" gün · "+fn(s.shY)+" yev."],["Günlük ortalama",fn(s.work?s.tot/s.work:0)],["Girilmemiş gün",s.empty],["Avans + kesinti",tm(s.av+s.ke)],["Seri 🔥",sk.cur+" gün · en uzun "+sk.best]]
+ $("stats").innerHTML=[["Toplam yevmiye",fn(s.tot)],["Çalışılan gün",s.work],["Gelinmeyen gün",s.miss],["Mesaili gün (1’den fazla)",s.ot],["Pazar/tatil çalışma",s.sh+" gün · "+fn(s.shY)+" yev."],["Girilmemiş gün",s.empty],["Avans + kesinti",tm(s.av+s.ke)],["Seri 🔥",sk.cur+" gün · en uzun "+sk.best]]
   .map(function(a){return '<div class="st"><small>'+a[0]+'</small><b>'+a[1]+'</b></div>'}).join("");
  var h=GN.map(function(g){return '<div class="dn">'+g+'</div>'}).join("");
  for(var i=0;i<first;i++)h+='<button class="d e"></button>';
@@ -226,9 +227,11 @@ function qa(s,f){Array.prototype.forEach.call($("pn").querySelectorAll(s),f)}
 function openDay(d){var k=key(Y,M,d),h=H[k];sel=d;
  openSheet('<h3>'+d+' '+AY[M]+' '+Y+' · '+GN[(new Date(Y,M,d).getDay()+6)%7]+'</h3>'+(h?'<p class="hn">'+(h.dini?"🌙 ":"🇹🇷 ")+esc(h.n)+(h.half?" (yarım gün)":"")+'</p>':'')
  +'<div class="ch">'+[0,.5,1,1.5,2,2.5,3].map(function(v){return '<button data-v="'+v+'">'+fn(v)+'</button>'}).join("")+'<button class="x" data-v="x">Sil</button></div>'
+ +'<div class="rr"><input id="cv" type="text" inputmode="decimal" placeholder="Kendi tutarın (örn. 1,25)" value="'+(typeof S.days[k]==="number"&&[0,.5,1,1.5,2,2.5,3].indexOf(S.days[k])<0?fn(S.days[k]):"")+'"><button class="btn" id="cb">Ekle</button></div>'
  +'<input id="nt" placeholder="Not (neden gelmedim, hangi iş…)" value="'+esc(S.notes[k]||"")+'"><button class="sv g" id="ns">Sadece notu kaydet</button>');
  function sn(){var t=$("nt").value.trim();if(t)S.notes[k]=t;else delete S.notes[k]}
  qa("[data-v]",function(b){b.onclick=function(){var v=b.dataset.v;if(v==="x")delete S.days[k];else S.days[k]=parseFloat(v);sn();save();closeSheet();render()}});
+ $("cb").onclick=function(){var x=parseFloat(String($("cv").value).replace(",","."));if(!(x>=0&&x<=10)){$("cv").style.borderColor="var(--bad)";return}S.days[k]=Math.round(x*100)/100;sn();save();closeSheet();render()};
  $("ns").onclick=function(){sn();save();closeSheet();render()}}
 
 function openMove(){var kind="ek",def=(Y===now.getFullYear()&&M===now.getMonth())?ds(now):key(Y,M,1);
