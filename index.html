@@ -63,12 +63,17 @@ input{width:100%;padding:11px;font-size:16px;border-radius:10px;border:1px solid
 .tg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}.tb{border:2px solid var(--ln);border-radius:12px;padding:6px;cursor:pointer;font-size:11px;line-height:1.2}.tb.on{border-color:var(--ac)}.tb i{display:block;height:22px;border-radius:6px;margin-bottom:5px}
 .gr{font-size:17px;font-weight:600;line-height:1.35;margin:6px 0 14px;text-align:center}.gr small{display:block;font-size:12px;font-weight:400;color:var(--mut);margin-bottom:2px}
 .top{display:grid;grid-template-columns:1fr auto 1fr;align-items:center}.top h1{font-size:28px;line-height:1}.top .btn{justify-self:end}
+.wx{display:flex;align-items:stretch;gap:10px;background:var(--card);border:1px solid var(--ln);border-radius:14px;padding:10px 12px;margin-bottom:12px;cursor:pointer}
+.wn{flex:0 0 auto;min-width:94px;border-right:1px solid var(--ln);padding-right:10px}.wn b{font-size:22px;display:block}.wn small{color:var(--mut);font-size:11px;line-height:1.35;display:block}
+.wd{flex:1;display:flex;justify-content:space-between;gap:4px;text-align:center}.wd>div{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px}.wd small{color:var(--mut);font-size:11px}.wd span{font-size:20px;line-height:1.1}
+.wxb{width:100%;margin-bottom:12px;color:var(--mut)}
 @media print{.noprint,.sh,#lk{display:none!important}body{background:#fff;color:#000}.d,.st,.lst,.bars{border-color:#999}}
 </style>
 </head>
 <body>
 <div class="top"><span></span><h1>⚓</h1><button class="btn noprint" id="rb"></button></div>
 <div class="gr noprint" id="gr"></div>
+<div class="noprint" id="wx"></div>
 <div id="msg" class="noprint"></div>
 <div class="nav noprint"><button class="btn" id="pv">‹</button><b id="mt"></b><button class="btn" id="nx">›</button></div>
 <div class="hero"><button class="eye noprint" id="eye"></button><small>Bu ay net (ele geçen)</small><div class="big" id="earn"></div><small id="sub"></small><small id="fx" style="margin-top:4px;cursor:pointer"></small></div>
@@ -96,7 +101,7 @@ var KD={ek:"Ek ödeme",avans:"Avans / borç",kesinti:"Kesinti"};
 function load(){var s=null;try{s=JSON.parse(localStorage.getItem(KEY))}catch(e){}
  if(!s)s={};
  s.rates=(s.rates&&s.rates.length)?s.rates:[{from:"2000-01-01",rate:0}];
- s.days=s.days||{};s.notes=s.notes||{};s.moves=s.moves||[];s.pin=s.pin||"";s.lastBackup=s.lastBackup||0;s.hide=!!s.hide;s.theme=s.theme||"auto";s.fx=s.fx||null;return s}
+ s.days=s.days||{};s.notes=s.notes||{};s.moves=s.moves||[];s.pin=s.pin||"";s.lastBackup=s.lastBackup||0;s.hide=!!s.hide;s.name=s.name||"";s.nameAsked=!!s.nameAsked;s.wxc=s.wxc||(s.wxNo?null:{n:"Altınova",lat:40.70,lon:29.51});s.wx=s.wx||null;s.wxNo=!!s.wxNo;s.theme=s.theme||"auto";s.fx=s.fx||null;return s}
 var S=load(),now=new Date(),Y=now.getFullYear(),M=now.getMonth(),sel=0;
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){$("msg").textContent="Kaydedilemedi: tarayıcı depolaması kapalı ya da dolu"}}
 function pad(n){return String(n).padStart(2,"0")}
@@ -171,7 +176,7 @@ function render(){
  $("cal").innerHTML=h;
  var pre=Y+"-"+pad(M+1),ms=S.moves.filter(function(x){return x.date.slice(0,7)===pre}).sort(function(a,b){return a.date<b.date?-1:1});
  $("mv").innerHTML=ms.length?ms.map(function(x){var p=x.kind==="ek";return '<div><span>'+(+x.date.slice(8))+" "+AY[M].slice(0,3)+" · "+KD[x.kind]+(x.note?'<small>'+esc(x.note)+'</small>':'')+'</span><span style="color:var(--'+(p?"ok":"bad")+')"><b>'+(p?"+":"−")+tm(x.amt)+'</b> <button class="x noprint" data-id="'+x.id+'">✕</button></span></div>'}).join(""):'<div><span style="color:var(--mut)">Bu ay kayıt yok</span></div>';
- renderHol();renderChart();renderAlerts(s,sk);renderFx(s);$("eye").textContent=S.hide?"🙈":"👁";$("gr").innerHTML='<small>'+now.getDate()+" "+AY[now.getMonth()]+" "+GNF[now.getDay()]+'</small>'+esc(greet(sk));
+ renderHol();renderChart();renderAlerts(s,sk);renderFx(s);renderWx();$("eye").textContent=S.hide?"🙈":"👁";$("gr").innerHTML='<small>'+now.getDate()+" "+AY[now.getMonth()]+" "+GNF[now.getDay()]+'</small>'+esc(greet(sk));
 }
 function renderHol(){
  var t=ds(now),ks=Object.keys(H).sort().filter(function(k){return k>=t&&!H[k].half}),out="";
@@ -199,6 +204,7 @@ function streaks(){var ks=Object.keys(S.days).filter(function(k){return typeof S
  return{cur:run,best:best}}
 function renderAlerts(s,sk){var a=[],t=ds(now),cur=(Y===now.getFullYear()&&M===now.getMonth());
  if(rateFor(t)===0)a.push("⚠️ Günlük ücret girilmemiş, ⚙ menüsünden gir");
+ if(S.wx&&S.wx.d&&S.wx.d[0]&&S.wx.d[0].d===t){if(S.wx.d[0].p>=60&&cur)a.push("☔ Bugün yağmur ihtimali %"+S.wx.d[0].p);if(S.wx.c.k>=35&&cur)a.push("💨 Rüzgâr kuvvetli ("+Math.round(S.wx.c.k)+" km/s)")}
  if(s.empty>0)a.push("📝 "+s.empty+" gün henüz girilmemiş");
  if(cur){var py=M?Y:Y-1,pm=M?M-1:11,dd=now.getDate(),w=0,pw=0;
   for(var d=1;d<=dd;d++){if(S.days[key(Y,M,d)]>0)w++;if(S.days[key(py,pm,d)]>0)pw++}
@@ -242,8 +248,8 @@ function openMove(){var kind="ek",def=(Y===now.getFullYear()&&M===now.getMonth()
 
 function bb(){return '<button class="btn" id="bb" style="margin-bottom:10px">‹ Ayarlar</button>'}
 function openSet(){
- openSheet('<h3>Ayarlar</h3><button class="sv g" id="s1">💰 Yevmiye ücreti ve zam</button><button class="sv g" id="s2">🎨 Temalar</button><button class="sv g" id="s3">💾 Yedek</button><button class="sv g" id="s4">🔒 Kilit (PIN)</button><button class="sv" id="ok">Tamam</button>');
- $("s1").onclick=function(){openRates()};$("s2").onclick=openThemes;$("s3").onclick=openBackup;$("s4").onclick=openPin;$("ok").onclick=closeSheet}
+ openSheet('<h3>Ayarlar</h3><button class="sv g" id="s1">💰 Yevmiye ücreti ve zam</button><button class="sv g" id="s2">🎨 Temalar</button><button class="sv g" id="s5">👤 İsmim</button><button class="sv g" id="s6">🌤 Hava durumu</button><button class="sv g" id="s3">💾 Yedek</button><button class="sv g" id="s4">🔒 Kilit (PIN)</button><button class="sv" id="ok">Tamam</button>');
+ $("s1").onclick=function(){openRates()};$("s2").onclick=openThemes;$("s3").onclick=openBackup;$("s4").onclick=openPin;$("s5").onclick=function(){openName(false)};$("s6").onclick=openWx;$("ok").onclick=closeSheet}
 function openRates(first){
  var rows=S.rates.slice().sort(function(a,b){return a.from<b.from?-1:1});
  openSheet(bb()+'<h3>Yevmiye ücreti'+(first?' — önce günlük ücretini gir':'')+'</h3>'+rows.map(function(r,i){return '<div class="rr"><span>'+(i===0?"Başlangıç":fmtD(r.from)+"’den itibaren")+'</span><input type="number" inputmode="decimal" data-f="'+r.from+'" value="'+(r.rate||"")+'" placeholder="₺">'+(i?'<button class="x" data-r="'+r.from+'">✕</button>':'')+'</div>'}).join("")
@@ -270,6 +276,39 @@ function openPin(){
  $("pn1").onclick=function(){var p=prompt("Yeni PIN (en az 4 rakam)");if(p&&/^\d{4,}$/.test(p)){S.pin=hp(p);save();openPin()}else if(p)alert("En az 4 rakam gir")};
  if(S.pin)$("pn2").onclick=function(){if(confirm("PIN kaldırılsın mı?")){S.pin="";save();openPin()}}}
 
+function needRate(){return S.rates.length===1&&!S.rates[0].rate}
+function openName(first){
+ if(first){S.nameAsked=true;save()}
+ openSheet((first?'':bb())+'<h3>Adın ne?</h3><p class="lg" style="font-size:13px">İstersen yaz, sana adınla hitap edeyim. İstemezsen geç, sonra ⚙ menüsünden de yazabilirsin.</p><input id="nm" maxlength="20" placeholder="Adın (isteğe bağlı)" value="'+esc(S.name)+'"><button class="sv" id="nk">Kaydet</button><button class="sv g" id="ng">'+(first?'Geç':'Adı sil')+'</button>');
+ if(!first)$("bb").onclick=openSet;
+ function done(n){S.name=n;save();render();closeSheet();if(first&&needRate())openRates(true)}
+ $("nk").onclick=function(){done($("nm").value.trim().slice(0,20))};
+ $("ng").onclick=function(){done(first?S.name:"")}}
+
+var CITY=[["Altınova",40.70,29.51],["Tuzla",40.82,29.30],["Gebze",40.80,29.43],["Yalova",40.65,29.27],["Kocaeli",40.77,29.92],["İstanbul",41.01,28.98],["Bursa",40.19,29.06],["Sakarya",40.76,30.40],["Zonguldak",41.45,31.79],["Çanakkale",40.15,26.41],["Aliağa",38.80,26.97],["İzmir",38.42,27.14],["Ankara",39.93,32.86],["Antalya",36.90,30.71],["Mersin",36.80,34.64],["Samsun",41.29,36.33],["Trabzon",41.00,39.72]];
+function wic(c){return c===0?"☀️":c===1?"🌤":c===2?"⛅":c===3?"☁️":(c===45||c===48)?"🌫":c<=57?"🌦":c<=67?"🌧":c<=77?"❄️":c<=82?"🌧":c<=86?"❄️":"⛈"}
+function wxOld(){return !S.wx||Date.now()-S.wx.t>36e5}
+function fetchWx(){var c=S.wxc;if(!c)return;
+ fetch("https://api.open-meteo.com/v1/forecast?latitude="+c.lat+"&longitude="+c.lon+"&current=temperature_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=5")
+ .then(function(r){return r.json()}).then(function(j){if(!j.current||!j.daily)throw 0;
+  S.wx={t:Date.now(),c:{t:j.current.temperature_2m,w:j.current.weather_code,k:j.current.wind_speed_10m},d:j.daily.time.map(function(x,i){return{d:x,w:j.daily.weather_code[i],a:j.daily.temperature_2m_max[i],b:j.daily.temperature_2m_min[i],p:j.daily.precipitation_probability_max[i]}})};save();render()}).catch(function(){})}
+function setWx(c){S.wxc=c;S.wx=null;S.wxNo=false;save();closeSheet();render();fetchWx()}
+function renderWx(){var el=$("wx");
+ if(!S.wxc){el.innerHTML=S.wxNo?"":'<button class="btn wxb" id="wxa">🌤 Hava durumunu ekle</button>';if($("wxa"))$("wxa").onclick=openWx;return}
+ var w=S.wx;
+ if(!w){el.innerHTML='<div class="wx" id="wxs"><div class="wn"><b>🌤 …</b><small>'+esc(S.wxc.n)+'<br>yükleniyor (internet gerekir)</small></div></div>';$("wxs").onclick=openWx;return}
+ var d0=w.d[0],old=Date.now()-w.t>3*36e5;
+ el.innerHTML='<div class="wx" id="wxs"><div class="wn"><b>'+wic(w.c.w)+" "+Math.round(w.c.t)+'°</b><small>'+esc(S.wxc.n)+(old?" (eski)":"")+'<br>↑'+Math.round(d0.a)+'° ↓'+Math.round(d0.b)+'° · '+Math.round(w.c.k)+' km/s</small></div><div class="wd">'+w.d.slice(1,5).map(function(x){return '<div><small>'+GN[(new Date(x.d+"T12:00:00").getDay()+6)%7]+'</small><span>'+wic(x.w)+'</span><b>'+Math.round(x.a)+'°</b><small>'+Math.round(x.b)+'°'+(x.p>=30?' 💧'+x.p:'')+'</small></div>'}).join("")+'</div></div>';
+ $("wxs").onclick=openWx}
+function openWx(){
+ openSheet(bb()+'<h3>Hava durumu</h3><button class="sv g" id="wl">📍 Konumumu kullan</button><div class="tg">'+CITY.map(function(c,i){return '<button class="tb'+(S.wxc&&S.wxc.n===c[0]?" on":"")+'" data-c="'+i+'" style="background:var(--bg);color:var(--tx)">'+c[0]+'</button>'}).join("")+'</div>'+(S.wxc?'<button class="sv g" id="wo">Şeridi kaldır</button>':'')+'<p class="lg">Veriler Open-Meteo’dan gelir, internet gerekir. Konum izni sadece “Konumumu kullan”a basınca istenir. 💧 işareti yağış ihtimalidir (%).</p>');
+ $("bb").onclick=openSet;
+ qa("[data-c]",function(b){b.onclick=function(){var c=CITY[+b.dataset.c];setWx({n:c[0],lat:c[1],lon:c[2]})}});
+ $("wl").onclick=function(){if(!navigator.geolocation){alert("Bu tarayıcı konumu desteklemiyor");return}
+  navigator.geolocation.getCurrentPosition(function(p){setWx({n:"Konumum",lat:Math.round(p.coords.latitude*100)/100,lon:Math.round(p.coords.longitude*100)/100})},function(){alert("Konum alınamadı, şehirlerden seçebilirsin")},{timeout:10000})};
+ if(S.wxc)$("wo").onclick=function(){S.wxc=null;S.wx=null;S.wxNo=true;save();render();closeSheet()}}
+
+var WEL=Date.now();
 var GNF=["Pazar","Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi"];
 var WD=[["İyi pazarlar, bugün dinlenme günü 😌","Pazar keyfi, ailenle vakit geçir","Yarın yeni hafta başlıyor, bugün dinlen","Pazar sefası, çayını iç, rahatla ☕"],
 ["Yeni hafta hayırlı olsun 💪","Pazartesi, haftaya güçlü başla","Hafta başladı, kolay gelsin"],
@@ -282,6 +321,8 @@ var GEN=["Alın teri en güzel kazançtır","Emeğin boşa gitmez","Helal kazan�
 function pick(a,seed){var h=0;for(var i=0;i<seed.length;i++)h=(h*31+seed.charCodeAt(i))|0;return a[Math.abs(h)%a.length]}
 function greet(sk){var t=ds(now),hr=now.getHours(),dw=now.getDay(),v=S.days[t],h=H[t],P=[],cs=stats(now.getFullYear(),now.getMonth()),dd=now.getDate(),r=new Date(now.getFullYear(),now.getMonth()+1,0).getDate()-dd,rate=rateFor(t),
  seed=t+"-"+Math.floor(hr/3)+"-"+(typeof v==="number"?v:"u");
+ var nm=S.name,n=nm?" "+nm:"";
+ if(Date.now()-WEL<8000)return pick(hr>=5&&hr<11?["Günaydın"+n+", hoş geldin ☀️","Hoş geldin"+n+", günaydın, hayırlı işler","Günaydın"+n+", güne bismillah 💪"]:hr>=11&&hr<18?["Hoş geldin"+n+", iyi günler 👋","İyi günler"+n+", günün nasıl geçiyor?","Hoş geldin"+n+", kolay gelsin 💪"]:hr>=18&&hr<22?["İyi akşamlar"+n+", hoş geldin 🌆","Hoş geldin"+n+", yorgunluk atılsın","İyi akşamlar"+n+", günün nasıl geçti?"]:["İyi geceler"+n+", hoş geldin 🌙","Geç olmuş"+n+", biraz dinlen"],seed+"w");
  if(h&&!h.half)return pick(h.dini?["Bayramınız mübarek olsun 🌙","İyi bayramlar, tatil keyfini çıkar","Bayram sevinci hanene gelsin","Bayram günü, sevdiklerinle ol 🤲"]:["İyi tatiller, bugün resmî tatil 🇹🇷","Bugün tatil, keyfine bak","Tatil günü, dinlen biraz","Resmî tatil, çalıştıysan ücretine dikkat"],seed);
  if(hr>=5&&hr<11)P.push("Günaydın, hayırlı işler ☀️","Güne bismillah, kolay gelsin 💪","Günaydın, bugün de bereketli geçsin","Kahveni al, güne başla ☕");
  else if(hr>=11&&hr<15)P.push("İyi günler, günün nasıl geçiyor?","Günün yarısı geçti, az kaldı 💪","Öğle arası, biraz nefeslen","Kolay gelsin, iş yoğun mu?");
@@ -305,6 +346,7 @@ function greet(sk){var t=ds(now),hr=now.getHours(),dw=now.getDay(),v=S.days[t],h
  if(r===0)P.push("Ayın son günü, hesap vakti 📝");
  if(cs.work>0)P.push("Bu ay "+cs.work+" gün çalıştın 💪");
  if(cs.miss===0&&cs.work>=5)P.push("Bu ay hiç aksatmadın, helal olsun 👏");
+ if(nm){P.push("Kolay gelsin "+nm+" 💪","Eline sağlık "+nm,nm+", bugün de helal olsun","Bol kazançlar "+nm+" 💰","Sağlık olsun "+nm+", gerisi gelir");if(typeof v==="number"&&v>0)P.push(nm+", bugünü çıkardın, eline sağlık 💪")}
  P.push(GEN[(dd+dw)%GEN.length]);
  return pick(P,seed)}
 function dl(name,text,type){var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type:type}));a.download=name;document.body.appendChild(a);a.click();a.remove()}
@@ -333,14 +375,17 @@ $("pd").onclick=function(){window.print()};
 
 $("eye").onclick=function(){S.hide=!S.hide;save();render()};
 $("fx").onclick=fetchFx;
-document.addEventListener("visibilitychange",function(){if(!document.hidden){render();if(navigator.onLine&&fxOld())fetchFx()}});
+document.addEventListener("visibilitychange",function(){if(!document.hidden){if(!hid||Date.now()-hid>12e4){WEL=Date.now();setTimeout(render,8200)}render();if(S.wxc&&navigator.onLine&&wxOld())fetchWx();if(navigator.onLine&&fxOld())fetchFx()}});
 applyTheme();
 if(S.pin)lock();
 render();
 if(navigator.onLine&&fxOld())fetchFx();
-if(S.rates.length===1&&!S.rates[0].rate)openRates(true);
+if(!S.nameAsked)openName(true);
+else if(needRate())openRates(true);
 else if(S.lastBackup&&Date.now()-S.lastBackup>30*864e5)$("msg").textContent="Son yedekten 30 günden fazla geçti, ⚙ menüsünden yedek al";
 else if(!S.lastBackup&&Object.keys(S.days).length>20)$("msg").textContent="Henüz yedek almadın, ⚙ menüsünden yedek al";
+setTimeout(render,8200);
+if(S.wxc&&navigator.onLine&&wxOld())fetchWx();
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(function(){});
 </script>
 </body>
