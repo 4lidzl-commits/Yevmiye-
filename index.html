@@ -61,11 +61,13 @@ input{width:100%;padding:11px;font-size:16px;border-radius:10px;border:1px solid
 .hero{position:relative}.eye{position:absolute;top:10px;right:10px;background:#0003;border:0;color:var(--on,#fff);border-radius:10px;padding:6px 10px;font-size:16px;cursor:pointer}
 .al{background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:4px 12px;margin-bottom:12px;font-size:14px}.al div{padding:7px 0;border-bottom:1px solid var(--ln)}.al div:last-child{border:0}
 .tg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}.tb{border:2px solid var(--ln);border-radius:12px;padding:6px;cursor:pointer;font-size:11px;line-height:1.2}.tb.on{border-color:var(--ac)}.tb i{display:block;height:22px;border-radius:6px;margin-bottom:5px}
+.gr{font-size:17px;font-weight:600;line-height:1.35;margin:0 0 12px}.gr small{display:block;font-size:12px;font-weight:400;color:var(--mut);margin-bottom:2px}
 @media print{.noprint,.sh,#lk{display:none!important}body{background:#fff;color:#000}.d,.st,.lst,.bars{border-color:#999}}
 </style>
 </head>
 <body>
 <div class="top"><h1>⚓ Yevmiye Defteri</h1><button class="btn noprint" id="rb"></button></div>
+<div class="gr noprint" id="gr"></div>
 <div id="msg" class="noprint"></div>
 <div class="nav noprint"><button class="btn" id="pv">‹</button><b id="mt"></b><button class="btn" id="nx">›</button></div>
 <div class="hero"><button class="eye noprint" id="eye"></button><small>Bu ay net (ele geçen)</small><div class="big" id="earn"></div><small id="sub"></small><small id="fx" style="margin-top:4px;cursor:pointer"></small></div>
@@ -149,7 +151,7 @@ function stats(y,m){var n=new Date(y,m+1,0).getDate(),s={tot:0,gross:0,work:0,mi
  s.net=s.gross+s.ek-s.av-s.ke;return s}
 
 function render(){
- var sk=streaks(),s=stats(Y,M),n=new Date(Y,M+1,0).getDate(),first=(new Date(Y,M,1).getDay()+6)%7,t=ds(now);
+ now=new Date();var sk=streaks(),s=stats(Y,M),n=new Date(Y,M+1,0).getDate(),first=(new Date(Y,M,1).getDay()+6)%7,t=ds(now);
  $("mt").textContent=AY[M]+" "+Y;
  $("rb").textContent="⚙";
  $("earn").textContent=tm(s.net);
@@ -168,7 +170,7 @@ function render(){
  $("cal").innerHTML=h;
  var pre=Y+"-"+pad(M+1),ms=S.moves.filter(function(x){return x.date.slice(0,7)===pre}).sort(function(a,b){return a.date<b.date?-1:1});
  $("mv").innerHTML=ms.length?ms.map(function(x){var p=x.kind==="ek";return '<div><span>'+(+x.date.slice(8))+" "+AY[M].slice(0,3)+" · "+KD[x.kind]+(x.note?'<small>'+esc(x.note)+'</small>':'')+'</span><span style="color:var(--'+(p?"ok":"bad")+')"><b>'+(p?"+":"−")+tm(x.amt)+'</b> <button class="x noprint" data-id="'+x.id+'">✕</button></span></div>'}).join(""):'<div><span style="color:var(--mut)">Bu ay kayıt yok</span></div>';
- renderHol();renderChart();renderAlerts(s,sk);renderFx(s);$("eye").textContent=S.hide?"🙈":"👁";
+ renderHol();renderChart();renderAlerts(s,sk);renderFx(s);$("eye").textContent=S.hide?"🙈":"👁";$("gr").innerHTML='<small>'+now.getDate()+" "+AY[now.getMonth()]+" "+GNF[now.getDay()]+'</small>'+esc(greet(sk));
 }
 function renderHol(){
  var t=ds(now),ks=Object.keys(H).sort().filter(function(k){return k>=t&&!H[k].half}),out="";
@@ -235,27 +237,73 @@ function openMove(){var kind="ek",def=(Y===now.getFullYear()&&M===now.getMonth()
  $("mk").onclick=function(){var a=parseFloat($("ma").value),d=$("md").value;if(!(a>0)||!d)return;
   S.moves.push({id:Date.now(),date:d,kind:kind,amt:a,note:$("mn").value.trim()});save();closeSheet();render()}}
 
-function openSet(first){
+function bb(){return '<button class="btn" id="bb" style="margin-bottom:10px">‹ Ayarlar</button>'}
+function openSet(){
+ openSheet('<h3>Ayarlar</h3><button class="sv g" id="s1">💰 Yevmiye ücreti ve zam</button><button class="sv g" id="s2">🎨 Temalar</button><button class="sv g" id="s3">💾 Yedek</button><button class="sv g" id="s4">🔒 Kilit (PIN)</button><button class="sv" id="ok">Tamam</button>');
+ $("s1").onclick=function(){openRates()};$("s2").onclick=openThemes;$("s3").onclick=openBackup;$("s4").onclick=openPin;$("ok").onclick=closeSheet}
+function openRates(first){
  var rows=S.rates.slice().sort(function(a,b){return a.from<b.from?-1:1});
- openSheet('<h3>Yevmiye ücreti'+(first?' — önce günlük ücretini gir':'')+'</h3>'+rows.map(function(r,i){return '<div class="rr"><span>'+(i===0?"Başlangıç":fmtD(r.from)+"’den itibaren")+'</span><input type="number" inputmode="decimal" data-f="'+r.from+'" value="'+(r.rate||"")+'" placeholder="₺">'+(i?'<button class="x" data-r="'+r.from+'">✕</button>':'')+'</div>'}).join("")
- +'<h3 style="margin-top:14px">Zam / yeni ücret ekle</h3><input id="zd" type="date" value="'+ds(now)+'"><input id="za" type="number" inputmode="decimal" placeholder="Yeni günlük ücret ₺"><button class="sv" id="zk">Zammı ekle</button>'
- +'<h3 style="margin-top:14px">Tema</h3><div class="tg">'+thBtns(MAIN)+'</div><h3 style="margin-top:4px">Ekstra temalar</h3><div class="tg">'+thBtns(EXTRA)+'</div>'
- +'<h3 style="margin-top:14px">Yedek</h3><button class="sv g" id="bk">💾 Yedek al (dosya)</button><button class="sv g" id="rs">📂 Yedekten geri yükle</button><input id="rf" type="file" accept=".json,application/json" style="display:none">'
- +'<h3 style="margin-top:14px">Kilit</h3><button class="sv g" id="pn1">'+(S.pin?"PIN’i değiştir":"PIN koy")+'</button>'+(S.pin?'<button class="sv g" id="pn2">PIN’i kaldır</button>':'')
- +'<p class="lg">PIN sadece başkası telefonu eline alınca göz atmasın diyedir, tam güvenlik sağlamaz.</p><button class="sv" id="ok">Tamam</button>');
+ openSheet(bb()+'<h3>Yevmiye ücreti'+(first?' — önce günlük ücretini gir':'')+'</h3>'+rows.map(function(r,i){return '<div class="rr"><span>'+(i===0?"Başlangıç":fmtD(r.from)+"’den itibaren")+'</span><input type="number" inputmode="decimal" data-f="'+r.from+'" value="'+(r.rate||"")+'" placeholder="₺">'+(i?'<button class="x" data-r="'+r.from+'">✕</button>':'')+'</div>'}).join("")
+ +'<h3 style="margin-top:14px">Zam / yeni ücret ekle</h3><input id="zd" type="date" value="'+ds(now)+'"><input id="za" type="number" inputmode="decimal" placeholder="Yeni günlük ücret ₺"><button class="sv" id="zk">Zammı ekle</button><p class="lg">Zam tarihinden önceki aylar eski ücretle hesaplanır.</p>');
+ $("bb").onclick=openSet;
  qa("[data-f]",function(i){i.onchange=function(){S.rates.forEach(function(r){if(r.from===i.dataset.f)r.rate=parseFloat(i.value)||0});save();render()}});
- qa("[data-r]",function(b){b.onclick=function(){S.rates=S.rates.filter(function(r){return r.from!==b.dataset.r});save();render();openSet()}});
- qa("[data-th]",function(b){b.onclick=function(){S.theme=b.dataset.th;save();applyTheme();render();qa("[data-th]",function(x){x.classList.toggle("on",x===b)})}});
+ qa("[data-r]",function(b){b.onclick=function(){S.rates=S.rates.filter(function(r){return r.from!==b.dataset.r});save();render();openRates()}});
  $("zk").onclick=function(){var d=$("zd").value,a=parseFloat($("za").value);if(!d||!(a>0))return;
-  S.rates=S.rates.filter(function(r){return r.from!==d});S.rates.push({from:d,rate:a});save();render();openSet()};
+  S.rates=S.rates.filter(function(r){return r.from!==d});S.rates.push({from:d,rate:a});save();render();openRates()}}
+function openThemes(){
+ openSheet(bb()+'<h3>Temalar</h3><div class="tg">'+thBtns(MAIN)+'</div><h3 style="margin-top:6px">Ekstra temalar</h3><div class="tg">'+thBtns(EXTRA)+'</div>');
+ $("bb").onclick=openSet;
+ qa("[data-th]",function(b){b.onclick=function(){S.theme=b.dataset.th;save();applyTheme();render();qa("[data-th]",function(x){x.classList.toggle("on",x===b)})}})}
+function openBackup(){
+ openSheet(bb()+'<h3>Yedek</h3><button class="sv g" id="bk">💾 Yedek al (dosya)</button><button class="sv g" id="rs">📂 Yedekten geri yükle</button><input id="rf" type="file" accept=".json,application/json" style="display:none"><p class="lg">Telefon değiştirirsen ya da tarayıcı verisini silersen yedekten geri getirirsin.</p>');
+ $("bb").onclick=openSet;
  $("bk").onclick=function(){S.lastBackup=Date.now();save();dl("yevmiye-yedek-"+ds(now)+".json",JSON.stringify(S),"application/json");$("msg").textContent=""};
  $("rs").onclick=function(){$("rf").click()};
  $("rf").onchange=function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var o=JSON.parse(r.result);if(!o.days||!o.rates)throw 0;
-  if(!confirm("Mevcut veriler silinip yedekteki veriler yüklenecek. Emin misin?"))return;S=o;save();S=load();applyTheme();closeSheet();render()}catch(e){alert("Bu dosya geçerli bir yedek değil")}};r.readAsText(f)};
- $("pn1").onclick=function(){var p=prompt("Yeni PIN (en az 4 rakam)");if(p&&/^\d{4,}$/.test(p)){S.pin=hp(p);save();openSet()}else if(p)alert("En az 4 rakam gir")};
- if(S.pin)$("pn2").onclick=function(){if(confirm("PIN kaldırılsın mı?")){S.pin="";save();openSet()}};
- $("ok").onclick=closeSheet}
+  if(!confirm("Mevcut veriler silinip yedekteki veriler yüklenecek. Emin misin?"))return;S=o;save();S=load();applyTheme();closeSheet();render()}catch(e){alert("Bu dosya geçerli bir yedek değil")}};r.readAsText(f)}}
+function openPin(){
+ openSheet(bb()+'<h3>Kilit</h3><button class="sv g" id="pn1">'+(S.pin?"PIN’i değiştir":"PIN koy")+'</button>'+(S.pin?'<button class="sv g" id="pn2">PIN’i kaldır</button>':'')+'<p class="lg">PIN sadece başkası telefonu eline alınca göz atmasın diyedir, tam güvenlik sağlamaz.</p>');
+ $("bb").onclick=openSet;
+ $("pn1").onclick=function(){var p=prompt("Yeni PIN (en az 4 rakam)");if(p&&/^\d{4,}$/.test(p)){S.pin=hp(p);save();openPin()}else if(p)alert("En az 4 rakam gir")};
+ if(S.pin)$("pn2").onclick=function(){if(confirm("PIN kaldırılsın mı?")){S.pin="";save();openPin()}}}
 
+var GNF=["Pazar","Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi"];
+var WD=[["İyi pazarlar, bugün dinlenme günü 😌","Pazar keyfi, ailenle vakit geçir","Yarın yeni hafta başlıyor, bugün dinlen","Pazar sefası, çayını iç, rahatla ☕"],
+["Yeni hafta hayırlı olsun 💪","Pazartesi, haftaya güçlü başla","Hafta başladı, kolay gelsin"],
+["Salı, hafta rayına oturdu","Salı günü, ritim tutuyor"],
+["Haftanın ortası geldi 💪","Çarşamba, haftanın yarısı bitti"],
+["Perşembe, haftasonuna az kaldı","Perşembe geldi, bitmesine az kaldı"],
+["Hayırlı cumalar 🤲","Cuma geldi, hafta bitiyor","Cuma, pazara iki gün kaldı"],
+["Cumartesi, pazara az kaldı 😌","Haftanın son iş günü, kolay gelsin","Bugün bitince dinlenmek var"]];
+var GEN=["Alın teri en güzel kazançtır","Emeğin boşa gitmez","Helal kazanç bereketlidir","Sağlık olsun, gerisi gelir","Yorulursan mola ver, yol uzun","Çalışan yorulur ama kazanan o olur","Küçük adımlar büyük birikim yapar","Eline, koluna sağlık"];
+function pick(a,seed){var h=0;for(var i=0;i<seed.length;i++)h=(h*31+seed.charCodeAt(i))|0;return a[Math.abs(h)%a.length]}
+function greet(sk){var t=ds(now),hr=now.getHours(),dw=now.getDay(),v=S.days[t],h=H[t],P=[],cs=stats(now.getFullYear(),now.getMonth()),dd=now.getDate(),r=new Date(now.getFullYear(),now.getMonth()+1,0).getDate()-dd,rate=rateFor(t),
+ seed=t+"-"+Math.floor(hr/3)+"-"+(typeof v==="number"?v:"u");
+ if(h&&!h.half)return pick(h.dini?["Bayramınız mübarek olsun 🌙","İyi bayramlar, tatil keyfini çıkar","Bayram sevinci hanene gelsin","Bayram günü, sevdiklerinle ol 🤲"]:["İyi tatiller, bugün resmî tatil 🇹🇷","Bugün tatil, keyfine bak","Tatil günü, dinlen biraz","Resmî tatil, çalıştıysan ücretine dikkat"],seed);
+ if(hr>=5&&hr<11)P.push("Günaydın, hayırlı işler ☀️","Güne bismillah, kolay gelsin 💪","Günaydın, bugün de bereketli geçsin","Kahveni al, güne başla ☕");
+ else if(hr>=11&&hr<15)P.push("İyi günler, günün nasıl geçiyor?","Günün yarısı geçti, az kaldı 💪","Öğle arası, biraz nefeslen","Kolay gelsin, iş yoğun mu?");
+ else if(hr>=15&&hr<18)P.push("İyi günler, mesainin bitmesine az kaldı","Son saatler, dişini sık 💪","Çay vakti geldi ☕","Günün sonuna yaklaşıyorsun");
+ else if(hr>=18&&hr<22)P.push("İyi akşamlar, yorgunluk atılsın","Eline sağlık, bugün de bitti","Akşam oldu, günün hesabını gir 📝","Eve sağ salim, dinlen biraz");
+ else P.push("İyi geceler, yarın yeni gün 🌙","Geç olmuş, biraz dinlen","Uykunu al, yarın bereketli olsun");
+ P=P.concat(WD[dw]);
+ var n=(7-dw)%7;if(n>=1&&n<=5)P.push("Pazara "+n+" gün kaldı"+(n<=2?" 😌":""));
+ if(typeof v==="number"){
+  if(v>0){P.push("Bugünü çıkardın, eline sağlık 💪","Bugünün yevmiyesi tamam ✅","Parayı çıkardın bugün 💰","Bugün de alın teri döküldü, helal olsun");if(!S.hide&&rate>0)P.push("Bugün "+tl(v*rate)+" çıkardın 💰")}
+  if(v>1)P.push("Mesai yapmışsın, eline sağlık","Fazla mesai bereketli olsun 💪");
+  if(v===0)P.push("Bugün izinlisin, iyi dinlen","Bugün yok yazmışsın, yarın yine")}
+ else if(hr>=17&&workday(t))P.push("Bugünü girmeyi unutma 📝","Günün yevmiyesini yazdın mı?");
+ var ks=Object.keys(H).sort().filter(function(k){return k>t&&!H[k].half}),nk=ks[0],nd=ks.filter(function(k){return H[k].dini})[0];
+ if(nk){var d=diff(nk);if(d===1)P.push("Yarın tatil, az kaldı 🎉","Yarın tatil, bugün son gayret");else if(d<=7)P.push((H[nk].g||H[nk].n)+" için "+d+" gün kaldı")}
+ if(nd&&diff(nd)<=30)P.push("Bayrama "+diff(nd)+" gün kaldı 🌙");
+ if(sk.cur>=3)P.push(sk.cur+" gündür aralıksız geliyorsun, helal olsun 🔥",sk.cur+" gün üst üste, durma 🔥");
+ if(dd<=2)P.push("Yeni ay, yeni kazanç, hayırlı olsun");
+ if(dd===15)P.push("Ayın yarısı geçti 💪");
+ if(r>0&&r<=3)P.push("Ay sonuna "+r+" gün kaldı");
+ if(r===0)P.push("Ayın son günü, hesap vakti 📝");
+ if(cs.work>0)P.push("Bu ay "+cs.work+" gün çalıştın 💪");
+ if(cs.miss===0&&cs.work>=5)P.push("Bu ay hiç aksatmadın, helal olsun 👏");
+ P.push(GEN[(dd+dw)%GEN.length]);
+ return pick(P,seed)}
 function dl(name,text,type){var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type:type}));a.download=name;document.body.appendChild(a);a.click();a.remove()}
 function csv(){var n=new Date(Y,M+1,0).getDate(),pre=Y+"-"+pad(M+1),r=[["Tarih","Gün","Yevmiye","Ücret","Kazanç","Not"]],s=stats(Y,M);
  for(var d=1;d<=n;d++){var k=key(Y,M,d),v=S.days[k];if(typeof v==="number")r.push([fmtD(k),GN[(new Date(Y,M,d).getDay()+6)%7],fn(v),rateFor(k),fn(v*rateFor(k)),(H[k]?H[k].n+" ":"")+(S.notes[k]||"")])}
@@ -282,12 +330,12 @@ $("pd").onclick=function(){window.print()};
 
 $("eye").onclick=function(){S.hide=!S.hide;save();render()};
 $("fx").onclick=fetchFx;
-document.addEventListener("visibilitychange",function(){if(!document.hidden&&navigator.onLine&&fxOld())fetchFx()});
+document.addEventListener("visibilitychange",function(){if(!document.hidden){render();if(navigator.onLine&&fxOld())fetchFx()}});
 applyTheme();
 if(S.pin)lock();
 render();
 if(navigator.onLine&&fxOld())fetchFx();
-if(S.rates.length===1&&!S.rates[0].rate)openSet(true);
+if(S.rates.length===1&&!S.rates[0].rate)openRates(true);
 else if(S.lastBackup&&Date.now()-S.lastBackup>30*864e5)$("msg").textContent="Son yedekten 30 günden fazla geçti, ⚙ menüsünden yedek al";
 else if(!S.lastBackup&&Object.keys(S.days).length>20)$("msg").textContent="Henüz yedek almadın, ⚙ menüsünden yedek al";
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(function(){});
