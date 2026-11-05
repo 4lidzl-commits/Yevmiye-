@@ -119,6 +119,18 @@ select{width:100%;padding:11px;font-size:16px;border:1px solid var(--ln);backgro
 #spl svg{animation:pop .7s ease}
 @keyframes splout{to{opacity:0;visibility:hidden}}
 @keyframes pop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
+.mn{background:var(--card);border-radius:22px;box-shadow:var(--sh);padding:14px;margin-bottom:14px}
+.mh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px}
+.mt{display:flex;align-items:center;gap:10px;min-width:0}.mt>i{display:flex;flex:0 0 auto;width:40px;height:40px;border-radius:14px;align-items:center;justify-content:center;background:color-mix(in srgb,var(--ac) 14%,var(--card));color:var(--ac)}
+.mt b{font-size:15px}.mt small{display:block;color:var(--mut);font-size:12px}
+.seg2{display:flex;flex:0 0 auto;background:var(--bg);border-radius:12px;padding:3px}
+.seg2 button{border:0;background:none;color:var(--mut);padding:6px 11px;font-size:12px;border-radius:10px}.seg2 button.on{background:var(--card);color:var(--tx);box-shadow:var(--sh);font-weight:600}.seg2 button:disabled{opacity:.35}
+.mmain{background:linear-gradient(135deg,color-mix(in srgb,var(--ac) 18%,var(--card)),color-mix(in srgb,var(--ac) 5%,var(--card)));border-radius:18px;padding:14px 16px;margin-bottom:10px}
+.mmain small{display:block;font-size:10.5px;letter-spacing:.9px;color:var(--ac);font-weight:700}.mmain b{display:block;font-size:21px;margin:3px 0 2px;line-height:1.25;letter-spacing:-.2px}.mmain em{font-style:normal;color:var(--mut);font-size:12px}
+.mg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mg>div{display:flex;gap:9px;align-items:center;background:var(--bg);border-radius:14px;padding:10px}
+.mg i{display:flex;color:var(--ac);flex:0 0 auto}.mg span{font-size:13.5px;line-height:1.25;min-width:0}.mg span small{display:block;color:var(--mut);font-size:10.5px}
+.mf{margin-top:10px;font-size:12.5px;color:var(--mut);text-align:center}.mf b{color:var(--tx)}
 @media print{.tp{display:block!important}.tabbar,#spl,#upd{display:none!important}#t5{display:none!important}}
 @media print{.noprint,.sh,#lk{display:none!important}body{background:#fff;color:#000}.d,.st,.lst,.bars{border-color:#999}}
 </style>
@@ -134,6 +146,7 @@ select{width:100%;padding:11px;font-size:16px;border:1px solid var(--ln);backgro
 <div class="nav noprint"><button class="btn pvb">‹</button><b class="mtl"></b><button class="btn nxb">›</button></div>
 <div class="hero"><button class="eye noprint" id="eye"></button><small id="hl">Bu ay net (ele geçen)</small><div class="big" id="earn"></div><small id="sub"></small><small id="fx" style="margin-top:4px;cursor:pointer"></small><svg id="spk" class="spk" viewBox="0 0 100 30" preserveAspectRatio="none"></svg></div>
 <div class="qk noprint" id="qk"></div>
+<div id="mnw" class="noprint"></div>
 <div class="al" id="al" style="display:none"></div>
 </div>
 <div class="tp" id="t2" style="display:none">
@@ -165,8 +178,9 @@ select{width:100%;padding:11px;font-size:16px;border:1px solid var(--ln);backgro
 
 <script>
 var KEY="yevmiye-v2";
-var APP_VER="2.1";
+var APP_VER="2.2";
 var RELEASES=[
+ {v:"2.2",n:["Ana ekranda “Yemekte ne var?” kartı: bugünün öğle menüsü (Kasım 2026 listesi), yarın seçeneği ve kalori","Öğle saatlerinde karşılama cümlesi bugünün ana yemeğini söyler"]},
  {v:"2.1",n:["Sol üstte sürüm notları tuşu: bütün sürümlerde neler eklendi burada","Sayfayı yenile tuşu (Ayarlar ve bu sayfada): önbelleği temizleyip en son sürümü getirir, verilerin silinmez","Yevmiye girince yeni sürüm var mı diye kontrol eder, varsa üstte şerit çıkar"]},
  {v:"2.0",n:["Yeni yumuşak tasarım, çizgi ikonlar ve küçük animasyonlar","Takvimde sağa/sola kaydırarak ay değiştirme","Kazanç kartında ay içi kazanç grafiği","Araçlar sekmesi: hesap makinesi, köşegen, sac ağırlığı, zam hesapla, birim çevirici, KDV, euro, tarih farkı","Yeni simge ve açılış animasyonu","Yeni sürüm gelince uygulama haber verir"]},
  {v:"1.6",n:["Alt sekmeler: Ana, Takvim, Rapor, Tatil","Ana ekranda bugünü tek dokunuşla girme tuşları (0 / 1 / 1,5 / 2)"]},
@@ -260,7 +274,7 @@ function render(){
  $("cal").innerHTML=h;
  var pre=Y+"-"+pad(M+1),ms=S.moves.filter(function(x){return x.date.slice(0,7)===pre}).sort(function(a,b){return a.date<b.date?-1:1});
  $("mv").innerHTML=ms.length?ms.map(function(x){var p=x.kind==="ek";return '<div><span>'+(+x.date.slice(8))+" "+AY[M].slice(0,3)+" · "+KD[x.kind]+(x.note?'<small>'+esc(x.note)+'</small>':'')+'</span><span style="color:var(--'+(p?"ok":"bad")+')"><b>'+(p?"+":"−")+tm(x.amt)+'</b> <button class="x noprint" data-id="'+x.id+'">✕</button></span></div>'}).join(""):'<div><span style="color:var(--mut)">Bu ay kayıt yok</span></div>';
- renderHol();renderChart();renderAlerts(s,sk);renderFx(s);renderWx();renderQuick();$("eye").innerHTML=ic(S.hide?"eyeoff":"eye",18);$("spk").innerHTML=sparkHtml();$("gr").innerHTML='<small>'+now.getDate()+" "+AY[now.getMonth()]+" "+GNF[now.getDay()]+'</small>'+esc(greet(sk));
+ renderHol();renderChart();renderAlerts(s,sk);renderFx(s);renderWx();renderQuick();renderMenu();$("eye").innerHTML=ic(S.hide?"eyeoff":"eye",18);$("spk").innerHTML=sparkHtml();$("gr").innerHTML='<small>'+now.getDate()+" "+AY[now.getMonth()]+" "+GNF[now.getDay()]+'</small>'+esc(greet(sk));
 }
 function renderHol(){
  var t=ds(now),ks=Object.keys(H).sort().filter(function(k){return k>=t&&!H[k].half}),out="";
@@ -408,6 +422,11 @@ var ICS={home:'<path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1
  table:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/>',
  print:'<path d="M7 9V3h10v6M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="7" y="14" width="10" height="7"/>',
  plus:'<path d="M12 5v14M5 12h14"/>',
+ soup:'<path d="M4 12h16a8 8 0 0 1-16 0z"/><path d="M9 8c0-1.5 1-1.5 1-3M14 8c0-1.5 1-1.5 1-3"/>',
+ fork:'<path d="M6 3v7a2 2 0 0 0 4 0V3M8 3v18M17 21V3c-2.5 1.5-3 5-3 8h3"/>',
+ rice:'<path d="M3 13h18a9 9 0 0 1-18 0z"/><path d="M8 10c1-2 2-2 3 0M13 10c1-2 2-2 3 0"/>',
+ sweet:'<path d="M6 11h12l-1.2 10H7.2zM8 11a4 4 0 0 1 8 0"/>',
+ cup:'<path d="M6 4h12l-1.4 17H7.4zM6.6 9.5h10.8"/>',
  notes:'<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/>',
  refresh:'<path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/>',
  anchor:'<circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V21M8 11h8M4 14c0 4 3.5 7 8 7s8-3 8-7M4 14l-1.5 2.5M4 14l2.5.5M20 14l1.5 2.5M20 14l-2.5.5"/>',
@@ -452,6 +471,47 @@ function hardRefresh(){
 function openNotes(){
  openSheet('<h3>Sürüm notları</h3>'+RELEASES.map(function(r,i){return '<div class="res" style="margin-bottom:8px"><b>Sürüm '+r.v+'</b>'+(i===0?' <small>(şu an kullandığın)</small>':'')+'<br>'+r.n.map(function(x){return '• '+esc(x)}).join("<br>")+'</div>'}).join("")+'<button class="sv g" id="nrf">'+ic("refresh",18)+'Sayfayı yenile (en son sürümü getir)</button><button class="sv" id="nok">Tamam</button>');
  $("nrf").onclick=hardRefresh;$("nok").onclick=closeSheet}
+var MD=[
+["Şehriyeli Havuç Çorbası",65,"Sebzeli Misket Köfte",250,"Soslu Makarna",250,"Meyve",80,"Bardak Ayran",70],
+["Çerkez Çorbası",90,"Sucuklu Kuru Fasulye",220,"Tel Şehriyeli Pirinç Pilavı",230,"Havuç Dilimi",350,"Bardak Ayran",70],
+["Süzme Mercimek",70,"Tavuk Dünyası",285,"Soslu Makarna",250,"Meyve",80,"Bardak Ayran",70],
+["Ezogelin",100,"Kilis Tava",300,"Tel Şehriyeli Pirinç Pilavı",230,"Magnolya",200,"Bardak Ayran",70],
+["Buğdaylı Domates",90,"Arnavut Tavuğu",250,"Soslu Makarna",250,"Meyve",80,"Bardak Ayran",70],
+["Ayran Aşı",80,"Et Döner",350,"Arpa Şehriyeli Pirinç Pilavı",240,"Mevsim Salata",100,"Bardak Ayran",70],
+["Süzme Mercimek",70,"Napoliten Soslu İnegöl Köfte",300,"Sebzeli Bulgur Pilavı",235,"Kadayıflı Muhallebi",240,"Bardak Ayran",70],
+["Ezogelin",100,"Sebzeli Kebap",300,"Arpa Şehriyeli Pirinç Pilavı",240,"Meyve",80,"Bardak Ayran",70],
+["Sebzeli Tel Şehriyeli Çorba",70,"Etli Nohut",230,"Tavuklu Pilav",280,"Ballı Ballı",300,"Bardak Ayran",70],
+["Terbiyeli Tavuk Suyu",80,"Rosto Köfte Püreli",250,"Sebzeli Bulgur Pilavı",235,"Meyve",80,"Bardak Ayran",70],
+["Süzme Mercimek",70,"Adana Kebap",300,"Meyane Pilavı",220,"Sütlaç",240,"Bardak Ayran",70],
+["Ezogelin",100,"Portekiz Usulü Tavuk",250,"Soslu Makarna",250,"Meyve",80,"Bardak Ayran",70],
+["Arpa Şehriyeli Yoğurtlu Çorba",100,"Arnavut Ciğeri",350,"Tel Şehriyeli Pirinç Pilavı",230,"Mevsim Salata",100,"Bardak Ayran",70],
+["Süzme Mercimek",70,"Mantı",300,"Barbunya Pilaki",300,"Kemalpaşa",250,"Bardak Ayran",70],
+["Ezogelin",100,"Fırın Piliç Roti, Patates Kızartması",350,"Soslu Makarna",250,"Meyve",80,"Bardak Ayran",70],
+["Ayran Aşı",80,"Pastırmalı Kuru Fasulye",220,"Arpa Şehriyeli Pirinç Pilavı",240,"Ezme Kadayıf",300,"Bardak Ayran",70],
+["Terbiyeli Tavuk Suyu",80,"Soslu Piliç Baget",260,"Tel Şehriyeli Bulgur Pilavı",230,"Meyve",80,"Bardak Ayran",70],
+["Ezogelin",100,"Balık Buğulama",250,"Soslu Makarna",250,"İrmik Helva",220,"Limonata",80],
+["Düğün Çorbası",70,"Pideli Köfte",350,"Tel Şehriyeli Pirinç Pilavı",230,"Meyve",80,"Bardak Ayran",70],
+["Süzme Mercimek",70,"Tavuk Dünyası",285,"Soslu Makarna",250,"Mevsim Salata",100,"Bardak Ayran",70],
+["Terbiyeli Tavuk Suyu",80,"Kayseri Köfte",300,"Soslu Makarna",250,"Kazandibi",230,"Bardak Ayran",70],
+["Ezogelin",100,"Orman Kebabı",280,"Arpa Şehriyeli Pirinç Pilavı",240,"Meyve",80,"Bardak Ayran",70],
+["Prenses Çorbası",85,"Etli Nohut",230,"Arpa Şehriyeli Pirinç Pilavı",240,"Havuç Dilimi",350,"Bardak Ayran",70],
+["Süzme Mercimek",70,"Sebzeli Köfte",250,"Soslu Makarna",250,"Meyve",80,"Bardak Ayran",70],
+["Ezogelin",100,"Adana Kebap",300,"Tavuklu Pilav",280,"Portakallı Ballı Ballı",300,"Bardak Ayran",70],
+["Düğün Çorbası",70,"Tavuk Döner",350,"Nohutlu Pirinç Pilavı",245,"Meyve",80,"Bardak Ayran",70],
+["Buğdaylı Domates",90,"Macar Gulaş",300,"Arpa Şehriyeli Pirinç Pilavı",240,"Mevsim Salata",100,"Bardak Ayran",70],
+["Süzme Mercimek",70,"Sebzeli Piliç Yahni",250,"Tel Şehriyeli Pirinç Pilavı",230,"Tiramisu",240,"Bardak Ayran",70],
+["Ezogelin",100,"Mengen Musakka",250,"Bulgur Pilavı",235,"Meyve",80,"Bardak Ayran",70],
+["Ayran Aşı",80,"Etli Kuru Fasulye",220,"Tel Şehriyeli Pirinç Pilavı",230,"Ezme Kadayıf",300,"Bardak Ayran",70]];
+var MENU={};MD.forEach(function(r,i){var k="2026-11-"+pad(i+1);MENU[k]=[];for(var j=0;j<10;j+=2)MENU[k].push([r[j],r[j+1]])});
+var menuOff=0,MI=["soup","fork","rice","sweet","cup"];
+function mlab(i,n){return i===0?"Çorba":i===1?"Ana yemek":i===2?"Yan yemek":i===4?"İçecek":/salata/i.test(n)?"Salata":/^meyve/i.test(n)?"Meyve":/havuç/i.test(n)?"Garnitür":"Tatlı"}
+function renderMenu(){var el=$("mnw"),t=ds(now),k0=t,k1=addDays(t,1),h0=!!MENU[k0],h1=!!MENU[k1];
+ if(!h0&&!h1){el.innerHTML="";return}
+ if(!h0)menuOff=1;if(menuOff===1&&!h1)menuOff=0;
+ var k=menuOff?k1:k0,m=MENU[k],tot=m.reduce(function(a,x){return a+x[1]},0)+265,p=k.split("-");
+ var cells=[0,2,3,4].map(function(i){return '<div><i>'+ic(MI[i],20)+'</i><span><small>'+mlab(i,m[i][0])+'</small>'+esc(m[i][0])+'<small>'+m[i][1]+' kcal</small></span></div>'}).join("");
+ el.innerHTML='<div class="mn"><div class="mh"><div class="mt"><i>'+ic("fork",21)+'</i><div><b>Yemekte ne var?</b><small>'+(+p[2])+' '+AY[+p[1]-1]+' '+GNF[new Date(utc(k)).getUTCDay()]+' · öğle menüsü</small></div></div><div class="seg2"><button data-mo="0"'+(menuOff?'':' class="on"')+(h0?'':' disabled')+'>Bugün</button><button data-mo="1"'+(menuOff?' class="on"':'')+(h1?'':' disabled')+'>Yarın</button></div></div>'
+ +'<div class="mmain"><small>ANA YEMEK</small><b>'+esc(m[1][0])+'</b><em>'+m[1][1]+' kcal</em></div><div class="mg">'+cells+'</div><div class="mf">Toplam <b>≈ '+nf(tot,0)+' kcal</b> · 100 g ekmek dahil</div></div>'}
 var lastChk=0;function chkSoon(){if(Date.now()-lastChk>60000){lastChk=Date.now();checkVer()}}
 function openNew(){openSheet('<h3>Neler yeni · sürüm '+APP_VER+'</h3><div class="res">'+APP_NOTES.map(function(x){return '• '+esc(x)}).join("<br>")+'</div><button class="sv" id="okn">Tamam</button>');$("okn").onclick=closeSheet}
 
@@ -559,7 +619,7 @@ function greet(sk){var t=ds(now),hr=now.getHours(),dw=now.getDay(),v=S.days[t],h
  else if(hr>=15&&hr<18)P.push("İyi günler, mesainin bitmesine az kaldı","Son saatler, dişini sık 💪","Çay vakti geldi ☕","Günün sonuna yaklaşıyorsun");
  else if(hr>=18&&hr<22)P.push("İyi akşamlar, yorgunluk atılsın","Eline sağlık, bugün de bitti","Akşam oldu, günün hesabını gir 📝","Eve sağ salim, dinlen biraz");
  else P.push("İyi geceler, yarın yeni gün 🌙","Geç olmuş, biraz dinlen","Uykunu al, yarın bereketli olsun");
- P=P.concat(WD[dw]);
+ P=P.concat(WD[dw]);var md=MENU[t];if(md&&hr>=9&&hr<15)P.push("Bugün yemekte "+md[1][0]+" var 😋","Öğlen "+md[1][0]+" var, afiyet olsun");
  var n=(7-dw)%7;if(n>=1&&n<=5)P.push("Pazara "+n+" gün kaldı"+(n<=2?" 😌":""));
  if(typeof v==="number"){
   if(v>0){P.push("Bugünü çıkardın, eline sağlık 💪","Bugünün yevmiyesi tamam ✅","Parayı çıkardın bugün 💰","Bugün de alın teri döküldü, helal olsun");if(!S.hide&&rate>0)P.push("Bugün "+tl(v*rate)+" çıkardın 💰")}
@@ -608,6 +668,7 @@ $("qk").onclick=function(e){var b=e.target.closest("[data-q]");if(!b)return;
  if(b.dataset.q==="o"){Y=now.getFullYear();M=now.getMonth();render();openDay(now.getDate());return}
  S.days[ds(now)]=parseFloat(b.dataset.q);save();render();chkSoon()};
 $("tl").onclick=function(e){var b=e.target.closest("[data-tool]");if(b)openTool(b.dataset.tool)};
+$("mnw").onclick=function(e){var b=e.target.closest("[data-mo]");if(b&&!b.disabled){menuOff=+b.dataset.mo;renderMenu()}};
 $("updb").onclick=hardRefresh;$("nb").onclick=openNotes;
 document.addEventListener("click",function(e){if(navigator.vibrate&&e.target.closest&&e.target.closest("button"))navigator.vibrate(8)});
 var sx=0,sy=0;$("t2").addEventListener("touchstart",function(e){sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
