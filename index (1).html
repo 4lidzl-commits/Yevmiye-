@@ -141,6 +141,9 @@ select{width:100%;padding:11px;font-size:16px;border:1px solid var(--ln);backgro
 .cc{background:var(--card);border-radius:20px;box-shadow:var(--sh);padding:12px 8px 6px}
 .ccap{font-size:13px;color:var(--mut);padding:8px 6px 0;min-height:38px;line-height:1.45}.ccap b{color:var(--tx)}
 .cleg{display:flex;flex-wrap:wrap;gap:12px;font-size:11px;color:var(--mut);padding:8px 4px 0}.cleg i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.hero{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.eye{width:auto;height:42px;padding:0 14px;gap:7px;top:12px;right:12px;border-radius:15px;font-size:14px;font-weight:600;color:var(--on,#fff)}
+.eye span{line-height:1}
 @media print{.tp{display:block!important}.tabbar,#spl,#upd{display:none!important}#t5{display:none!important}}
 @media print{.noprint,.sh,#lk{display:none!important}body{background:#fff;color:#000}.d,.st,.lst,.bars{border-color:#999}}
 </style>
@@ -154,7 +157,7 @@ select{width:100%;padding:11px;font-size:16px;border:1px solid var(--ln);backgro
 <div class="noprint" id="wx"></div>
 <div id="msg" class="noprint"></div>
 <div class="nav noprint"><button class="btn pvb">‹</button><b class="mtl"></b><button class="btn nxb">›</button></div>
-<div class="hero"><button class="eye noprint" id="eye"></button><small id="hl">Bu ay net (ele geçen)</small><div class="big" id="earn"></div><small id="sub"></small><small id="fx" style="margin-top:4px;cursor:pointer"></small><svg id="spk" class="spk" viewBox="0 0 100 30" preserveAspectRatio="none"></svg></div>
+<div class="hero" id="hero"><button class="eye noprint" id="eye"></button><small id="hl">Bu ay net (ele geçen)</small><div class="big" id="earn"></div><small id="sub"></small><small id="fx" style="margin-top:4px;cursor:pointer"></small><svg id="spk" class="spk" viewBox="0 0 100 30" preserveAspectRatio="none"></svg></div>
 <div class="qk noprint" id="qk"></div>
 <div id="mnw" class="noprint"></div>
 <div class="al" id="al" style="display:none"></div>
@@ -193,8 +196,9 @@ select{width:100%;padding:11px;font-size:16px;border:1px solid var(--ln);backgro
 
 <script>
 var KEY="yevmiye-v2";
-var APP_VER="2.4";
+var APP_VER="2.5";
 var RELEASES=[
+ {v:"2.5",n:["Kazanç her açılışta gizli başlar, kartın herhangi bir yerine dokununca açılır","Büyük Göster/Gizle tuşu (eski küçük göz yerine)"]},
  {v:"2.4",n:["Rapor: “Çalışma performansı” kartı (devam oranı halkası, mesai oranı, geçen aya göre, haftanın günlerine göre ortalama)","Rapor: günlük yevmiye grafiği, güne dokununca ayrıntısı","Aylık kazanç grafiği yenilendi: brüt/net seçimi, ortalama çizgisi, aya dokununca ayrıntı"]},
  {v:"2.3",n:["Rapor sekmesinde “Tahmini ay sonu” kartı: şimdiye kadarki gelme düzenine göre ay sonu net kazanç tahmini","Kalan iş günlerinin hepsine gelirsen ne olur senaryosu"]},
  {v:"2.2",n:["Ana ekranda “Yemekte ne var?” kartı: bugünün öğle menüsü (Kasım 2026 listesi), yarın seçeneği ve kalori","Öğle saatlerinde karşılama cümlesi bugünün ana yemeğini söyler"]},
@@ -276,7 +280,7 @@ function render(){
  Array.prototype.forEach.call(document.querySelectorAll(".mtl"),function(e){e.textContent=AY[M]+" "+Y});$("hl").textContent=(Y===now.getFullYear()&&M===now.getMonth())?"Bu ay net (ele geçen)":AY[M]+" "+Y+" net (ele geçen)";
  $("rb").innerHTML=ic("sliders",20);$("nb").innerHTML=ic("notes",20);
  countTo($("earn"),s.net);
- $("sub").textContent="Brüt "+tm(s.gross)+" ("+fn(s.tot)+" yev.)"+(s.ek?" · +"+tm(s.ek)+" ek":"")+(s.ke?" · −"+tm(s.ke)+" kesinti":"")+(s.av?" · −"+tm(s.av)+" avans":"");
+ $("sub").textContent=S.hide?"Görmek için karta dokun · "+fn(s.tot)+" yev.":"Brüt "+tm(s.gross)+" ("+fn(s.tot)+" yev.)"+(s.ek?" · +"+tm(s.ek)+" ek":"")+(s.ke?" · −"+tm(s.ke)+" kesinti":"")+(s.av?" · −"+tm(s.av)+" avans":"");
  $("stats").innerHTML=[["Toplam yevmiye",fn(s.tot)],["Çalışılan gün",s.work],["Gelinmeyen gün",s.miss],["Mesaili gün (1’den fazla)",s.ot],["Pazar/tatil çalışma",s.sh+" gün · "+fn(s.shY)+" yev."],["Girilmemiş gün",s.empty],["Avans + kesinti",tm(s.av+s.ke)],["Seri 🔥",sk.cur+" gün · en uzun "+sk.best]]
   .map(function(a){return '<div class="st"><small>'+a[0]+'</small><b>'+a[1]+'</b></div>'}).join("");
  var h=GN.map(function(g){return '<div class="dn">'+g+'</div>'}).join("");
@@ -291,7 +295,7 @@ function render(){
  $("cal").innerHTML=h;
  var pre=Y+"-"+pad(M+1),ms=S.moves.filter(function(x){return x.date.slice(0,7)===pre}).sort(function(a,b){return a.date<b.date?-1:1});
  $("mv").innerHTML=ms.length?ms.map(function(x){var p=x.kind==="ek";return '<div><span>'+(+x.date.slice(8))+" "+AY[M].slice(0,3)+" · "+KD[x.kind]+(x.note?'<small>'+esc(x.note)+'</small>':'')+'</span><span style="color:var(--'+(p?"ok":"bad")+')"><b>'+(p?"+":"−")+tm(x.amt)+'</b> <button class="x noprint" data-id="'+x.id+'">✕</button></span></div>'}).join(""):'<div><span style="color:var(--mut)">Bu ay kayıt yok</span></div>';
- renderHol();renderChart();renderAlerts(s,sk);renderFx(s);renderWx();renderQuick();renderMenu();renderEst();renderPerf();renderDaily();$("eye").innerHTML=ic(S.hide?"eyeoff":"eye",18);$("spk").innerHTML=sparkHtml();$("gr").innerHTML='<small>'+now.getDate()+" "+AY[now.getMonth()]+" "+GNF[now.getDay()]+'</small>'+esc(greet(sk));
+ renderHol();renderChart();renderAlerts(s,sk);renderFx(s);renderWx();renderQuick();renderMenu();renderEst();renderPerf();renderDaily();$("eye").innerHTML=ic(S.hide?"eyeoff":"eye",20)+"<span>"+(S.hide?"Göster":"Gizle")+"</span>";$("spk").innerHTML=sparkHtml();$("gr").innerHTML='<small>'+now.getDate()+" "+AY[now.getMonth()]+" "+GNF[now.getDay()]+'</small>'+esc(greet(sk));
 }
 function renderHol(){
  var t=ds(now),ks=Object.keys(H).sort().filter(function(k){return k>=t&&!H[k].half}),out="";
@@ -761,11 +765,14 @@ $("updb").onclick=hardRefresh;$("nb").onclick=openNotes;
 document.addEventListener("click",function(e){if(navigator.vibrate&&e.target.closest&&e.target.closest("button"))navigator.vibrate(8)});
 var sx=0,sy=0;$("t2").addEventListener("touchstart",function(e){sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
 $("t2").addEventListener("touchend",function(e){var t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5)mvMonth(dx<0?1:-1)},{passive:true});
-$("eye").onclick=function(){S.hide=!S.hide;save();render()};
+function toggleHide(){S.hide=!S.hide;if(!S.hide)lastE=0;save();render()}
+$("eye").onclick=toggleHide;
+$("hero").onclick=function(e){if(e.target.closest("#eye,#fx"))return;toggleHide()};
 $("fx").onclick=fetchFx;
-document.addEventListener("visibilitychange",function(){if(!document.hidden){if(!hid||Date.now()-hid>12e4){WEL=Date.now();setTimeout(render,8200)}render();checkVer();if(S.wxc&&navigator.onLine&&wxOld())fetchWx();if(navigator.onLine&&fxOld())fetchFx()}});
+document.addEventListener("visibilitychange",function(){if(!document.hidden){if(!hid||Date.now()-hid>12e4){WEL=Date.now();S.hide=true;setTimeout(render,8200)}render();checkVer();if(S.wxc&&navigator.onLine&&wxOld())fetchWx();if(navigator.onLine&&fxOld())fetchFx()}});
 applyTheme();
 icons();renderTools();
+S.hide=true;
 if(S.pin)lock();
 render();
 if(navigator.onLine&&fxOld())fetchFx();
