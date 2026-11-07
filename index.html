@@ -133,6 +133,14 @@ select{width:100%;padding:11px;font-size:16px;border:1px solid var(--ln);backgro
 .mf{margin-top:10px;font-size:12.5px;color:var(--mut);text-align:center}.mf b{color:var(--tx)}
 .eh{font-size:13px;color:var(--mut)}.eb{font-size:30px;font-weight:700;letter-spacing:-.4px;margin:2px 0}.es0{font-size:13px;color:var(--mut);margin-bottom:6px}
 .er{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-top:1px solid var(--ln);font-size:14px}.er b{font-weight:600;text-align:right}
+.pf{display:flex;gap:14px;align-items:center}
+.ring{position:relative;flex:0 0 96px;height:96px}.ring svg{display:block}.ring b{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:22px;line-height:1.1}.ring small{font-size:10.5px;color:var(--mut);font-weight:500}
+.pm{flex:1;display:grid;gap:9px}.pm div{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:13px;color:var(--mut)}.pm b{color:var(--tx);font-size:16px}
+.pd{margin-top:12px;padding-top:12px;border-top:1px solid var(--ln);font-size:14px}.up{color:var(--ok)}.dn{color:var(--bad)}
+.wk{display:flex;align-items:flex-end;gap:6px;height:64px;margin-top:12px}.wk div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;gap:3px;font-size:10.5px;color:var(--mut)}.wk i{display:block;width:100%;border-radius:7px 7px 3px 3px;background:var(--ac);opacity:.45;min-height:3px}.wk div.top{color:var(--tx);font-weight:600}.wk div.top i{opacity:1}
+.cc{background:var(--card);border-radius:20px;box-shadow:var(--sh);padding:12px 8px 6px}
+.ccap{font-size:13px;color:var(--mut);padding:8px 6px 0;min-height:38px;line-height:1.45}.ccap b{color:var(--tx)}
+.cleg{display:flex;flex-wrap:wrap;gap:12px;font-size:11px;color:var(--mut);padding:8px 4px 0}.cleg i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:4px;vertical-align:-1px}
 @media print{.tp{display:block!important}.tabbar,#spl,#upd{display:none!important}#t5{display:none!important}}
 @media print{.noprint,.sh,#lk{display:none!important}body{background:#fff;color:#000}.d,.st,.lst,.bars{border-color:#999}}
 </style>
@@ -162,10 +170,14 @@ select{width:100%;padding:11px;font-size:16px;border:1px solid var(--ln);backgro
 <div class="tp" id="t3" style="display:none">
 <div class="nav noprint"><button class="btn pvb">‹</button><b class="mtl"></b><button class="btn nxb">›</button></div>
 <div class="mn" id="est" style="display:none"></div>
+<div class="mn" id="perf"></div>
 <div class="grid" id="stats"></div>
-<div class="row noprint"><button class="btn" id="wa"><span data-ic="share" data-sz="17"></span>Paylaş</button><button class="btn" id="xl"><span data-ic="table" data-sz="17"></span>Excel</button><button class="btn" id="pd"><span data-ic="print" data-sz="17"></span>PDF</button></div>
-<h2>Son 12 ay (brüt kazanç · çalışılan gün)</h2>
+
+<h2>Bu ayın günlük yevmiyesi</h2>
+<div id="dchart"></div>
+<h2>Aylık kazanç (son 12 ay)</h2>
 <div id="chart"></div>
+<div class="row noprint"><button class="btn" id="wa"><span data-ic="share" data-sz="17"></span>Paylaş</button><button class="btn" id="xl"><span data-ic="table" data-sz="17"></span>Excel</button><button class="btn" id="pd"><span data-ic="print" data-sz="17"></span>PDF</button></div>
 </div>
 <div class="tp" id="t4" style="display:none">
 <h2 style="margin-top:4px">Tatiller</h2>
@@ -181,8 +193,9 @@ select{width:100%;padding:11px;font-size:16px;border:1px solid var(--ln);backgro
 
 <script>
 var KEY="yevmiye-v2";
-var APP_VER="2.3";
+var APP_VER="2.4";
 var RELEASES=[
+ {v:"2.4",n:["Rapor: “Çalışma performansı” kartı (devam oranı halkası, mesai oranı, geçen aya göre, haftanın günlerine göre ortalama)","Rapor: günlük yevmiye grafiği, güne dokununca ayrıntısı","Aylık kazanç grafiği yenilendi: brüt/net seçimi, ortalama çizgisi, aya dokununca ayrıntı"]},
  {v:"2.3",n:["Rapor sekmesinde “Tahmini ay sonu” kartı: şimdiye kadarki gelme düzenine göre ay sonu net kazanç tahmini","Kalan iş günlerinin hepsine gelirsen ne olur senaryosu"]},
  {v:"2.2",n:["Ana ekranda “Yemekte ne var?” kartı: bugünün öğle menüsü (Kasım 2026 listesi), yarın seçeneği ve kalori","Öğle saatlerinde karşılama cümlesi bugünün ana yemeğini söyler"]},
  {v:"2.1",n:["Sol üstte sürüm notları tuşu: bütün sürümlerde neler eklendi burada","Sayfayı yenile tuşu (Ayarlar ve bu sayfada): önbelleği temizleyip en son sürümü getirir, verilerin silinmez","Yevmiye girince yeni sürüm var mı diye kontrol eder, varsa üstte şerit çıkar"]},
@@ -278,7 +291,7 @@ function render(){
  $("cal").innerHTML=h;
  var pre=Y+"-"+pad(M+1),ms=S.moves.filter(function(x){return x.date.slice(0,7)===pre}).sort(function(a,b){return a.date<b.date?-1:1});
  $("mv").innerHTML=ms.length?ms.map(function(x){var p=x.kind==="ek";return '<div><span>'+(+x.date.slice(8))+" "+AY[M].slice(0,3)+" · "+KD[x.kind]+(x.note?'<small>'+esc(x.note)+'</small>':'')+'</span><span style="color:var(--'+(p?"ok":"bad")+')"><b>'+(p?"+":"−")+tm(x.amt)+'</b> <button class="x noprint" data-id="'+x.id+'">✕</button></span></div>'}).join(""):'<div><span style="color:var(--mut)">Bu ay kayıt yok</span></div>';
- renderHol();renderChart();renderAlerts(s,sk);renderFx(s);renderWx();renderQuick();renderMenu();renderEst();$("eye").innerHTML=ic(S.hide?"eyeoff":"eye",18);$("spk").innerHTML=sparkHtml();$("gr").innerHTML='<small>'+now.getDate()+" "+AY[now.getMonth()]+" "+GNF[now.getDay()]+'</small>'+esc(greet(sk));
+ renderHol();renderChart();renderAlerts(s,sk);renderFx(s);renderWx();renderQuick();renderMenu();renderEst();renderPerf();renderDaily();$("eye").innerHTML=ic(S.hide?"eyeoff":"eye",18);$("spk").innerHTML=sparkHtml();$("gr").innerHTML='<small>'+now.getDate()+" "+AY[now.getMonth()]+" "+GNF[now.getDay()]+'</small>'+esc(greet(sk));
 }
 function renderHol(){
  var t=ds(now),ks=Object.keys(H).sort().filter(function(k){return k>=t&&!H[k].half}),out="";
@@ -290,12 +303,62 @@ function renderHol(){
  var it=[];ks.forEach(function(k){var l=it[it.length-1];if(H[k].g&&l&&l.g===H[k].g&&utc(k)-utc(l.e)===864e5)l.e=k;else it.push({s:k,e:k,n:H[k].g||H[k].n,g:H[k].g,di:H[k].dini})});
  out+='<div class="lst">'+it.slice(0,7).map(function(x){return '<div><span>'+esc(x.n)+'<small>'+fmtD(x.s)+(x.e!==x.s?" – "+fmtD(x.e):"")+'</small></span><b style="color:var(--'+(x.di?"bl":"bad")+')">'+(diff(x.s)<=0?"şimdi":diff(x.s)+" gün")+'</b></div>'}).join("")+'</div>';
  $("hol").innerHTML=out}
-function renderChart(){
- var a=[],mx=1,i,yy,mm;
- for(i=11;i>=0;i--){yy=Y;mm=M-i;while(mm<0){mm+=12;yy--}var s=stats(yy,mm);a.push([mm,s,i===0]);if(s.gross>mx)mx=s.gross}
- var yt=0,yg=0;for(i=0;i<12;i++){var q=stats(Y,i);yt+=q.tot;yg+=q.gross}
- $("chart").innerHTML='<div class="bars">'+a.map(function(x){return '<div class="bc'+(x[2]?" cur":"")+'"><small>'+(x[1].gross&&!S.hide?fn(x[1].gross/1000)+"b":"")+'</small><div class="br" style="height:'+Math.max(Math.round(x[1].gross/mx*80),2)+'%"></div><small>'+AY[x[0]].slice(0,3)+'</small><small>'+(x[1].work||"")+'</small></div>'}).join("")+'</div><div class="lg" style="margin-top:6px">'+Y+' toplamı: '+fn(yt)+' yevmiye · '+tm(yg)+' brüt'+(S.hide?'':' (b = bin ₺)')+'</div>'}
-
+var cm="g",chSel=null,lastYM="",CH=[],dSel=0,dYM="";
+function mval(x){return cm==="n"?x.net:x.gross}
+function ksh(v){return v>=1000?Math.round(v/1000)+"b":String(Math.round(v))}
+function renderChart(){var ym=Y+"-"+M;if(ym!==lastYM){lastYM=ym;chSel=null}
+ var a=[],mx=1,sum=0,cnt=0,i,yy,mm;
+ for(i=11;i>=0;i--){yy=Y;mm=M-i;while(mm<0){mm+=12;yy--}var st=stats(yy,mm),raw=mval(st),v=Math.max(raw,0);a.push({y:yy,m:mm,s:st,raw:raw,v:v});if(v>mx)mx=v;if(v>0){sum+=v;cnt++}}
+ CH=a;var sel=a[11];a.forEach(function(x){if(x.y+"-"+x.m===chSel)sel=x});
+ var W=340,HT=176,pl=6,pr=6,pt=20,pb=26,bw=(W-pl-pr)/12,ch=HT-pt-pb,avg=cnt?sum/cnt:0;
+ var g='<svg viewBox="0 0 '+W+' '+HT+'" width="100%" role="img" aria-label="Aylık kazanç grafiği">';
+ [0,.5,1].forEach(function(f){var y=pt+ch*(1-f);g+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+y+'" y2="'+y+'" stroke="var(--ln)" stroke-width="1"/>'});
+ a.forEach(function(x,j){var h=x.v/mx*ch,bx=pl+j*bw+bw*.15,w=bw*.7,by=pt+ch-h,on=x===sel;
+  if(x.v>0)g+='<rect x="'+bx+'" y="'+by+'" width="'+w+'" height="'+Math.max(h,3)+'" rx="6" fill="var(--ac)" opacity="'+(on?1:.42)+'"/>';
+  if(on)g+='<rect x="'+(pl+j*bw)+'" y="'+pt+'" width="'+bw+'" height="'+(ch+pb-6)+'" rx="8" fill="var(--ac)" opacity=".08"/>';
+  g+='<rect data-i="'+j+'" x="'+(pl+j*bw)+'" y="'+pt+'" width="'+bw+'" height="'+(ch+pb)+'" fill="transparent"/>';
+  g+='<text x="'+(bx+w/2)+'" y="'+(HT-8)+'" text-anchor="middle" font-size="9.5" fill="'+(on?"var(--ac)":"var(--mut)")+'" font-weight="'+(on?700:400)+'">'+AY[x.m].slice(0,3)+'</text>';
+  if(!S.hide&&x.v>0)g+='<text x="'+(bx+w/2)+'" y="'+(by-5)+'" text-anchor="middle" font-size="9.5" fill="var(--tx)">'+ksh(x.v)+'</text>'});
+ if(avg>0&&!S.hide){var ay=pt+ch*(1-avg/mx);g+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+ay+'" y2="'+ay+'" stroke="var(--ac)" stroke-dasharray="4 4" stroke-width="1" opacity=".8"/>'}
+ g+='</svg>';
+ $("chart").innerHTML='<div class="seg" style="max-width:200px;margin-bottom:8px"><button data-cm="g"'+(cm==="g"?' class="on"':'')+'>Brüt</button><button data-cm="n"'+(cm==="n"?' class="on"':'')+'>Net</button></div><div class="cc">'+g+'</div>'
+  +'<div class="ccap"><b>'+AY[sel.m]+' '+sel.y+'</b> · '+fn(sel.s.tot)+' yev. · '+sel.s.work+' gün · '+tm(sel.raw)+(cm==="n"?" net":" brüt")
+  +'<br>12 ay ortalaması: '+tm(avg)+'/ay'+(S.hide?'':' <span style="opacity:.8">(kesikli çizgi · b = bin ₺)</span>')+'</div>'}
+function renderDaily(){var n=new Date(Y,M+1,0).getDate(),ym=Y+"-"+M;if(ym!==dYM){dYM=ym;dSel=(Y===now.getFullYear()&&M===now.getMonth())?now.getDate():0}
+ var W=340,HT=134,pl=4,pr=4,pt=8,pb=22,bw=(W-pl-pr)/n,ch=HT-pt-pb,mxv=2,t=ds(now),d,k,v;
+ for(d=1;d<=n;d++){v=S.days[key(Y,M,d)];if(typeof v==="number"&&v>mxv)mxv=v}
+ var g='<svg viewBox="0 0 '+W+' '+HT+'" width="100%" role="img" aria-label="Günlük yevmiye grafiği"><line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+(pt+ch)+'" y2="'+(pt+ch)+'" stroke="var(--ln)"/><line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+(pt+ch*(1-1/mxv))+'" y2="'+(pt+ch*(1-1/mxv))+'" stroke="var(--ln)" stroke-dasharray="3 4"/>';
+ for(d=1;d<=n;d++){k=key(Y,M,d);v=S.days[k];var x=pl+(d-1)*bw,bx=x+bw*.14,w=bw*.72,off=!workday(k),on=d===dSel;
+  if(on)g+='<rect x="'+x+'" y="'+pt+'" width="'+bw+'" height="'+(ch+pb-5)+'" rx="5" fill="var(--ac)" opacity=".1"/>';
+  if(typeof v==="number"){if(v>0){var h=v/mxv*ch;g+='<rect x="'+bx+'" y="'+(pt+ch-h)+'" width="'+w+'" height="'+h+'" rx="'+Math.min(w/2,4)+'" fill="'+(off?"var(--bl)":"var(--ac)")+'" opacity="'+(on||v>1||off?1:.6)+'"/>'}
+   else g+='<rect x="'+bx+'" y="'+(pt+ch-3)+'" width="'+w+'" height="3" rx="1.5" fill="var(--bad)"/>'}
+  else if(k<=t&&!off)g+='<circle cx="'+(x+bw/2)+'" cy="'+(pt+ch-2)+'" r="1.6" fill="var(--mut)" opacity=".7"/>';
+  g+='<rect data-d="'+d+'" x="'+x+'" y="'+pt+'" width="'+bw+'" height="'+(ch+pb)+'" fill="transparent"/>';
+  if(d===1||d%5===0||d===n)g+='<text x="'+(x+bw/2)+'" y="'+(HT-7)+'" text-anchor="middle" font-size="9.5" fill="'+(on?"var(--ac)":"var(--mut)")+'" font-weight="'+(on?700:400)+'">'+d+'</text>'}
+ g+='</svg>';
+ $("dchart").innerHTML='<div class="cc">'+g+'</div><div class="cleg"><span><i style="background:var(--ac)"></i>Normal / mesai</span><span><i style="background:var(--bl)"></i>Pazar / tatil</span><span><i style="background:var(--bad)"></i>Gelmedi</span></div><div class="ccap" id="dcap"></div>';
+ var el=$("dcap");if(!dSel){el.textContent="Bir güne dokun, ayrıntısı burada görünür.";return}
+ k=key(Y,M,dSel);v=S.days[k];var hh=H[k];
+ el.innerHTML='<b>'+dSel+' '+AY[M]+' '+GNF[new Date(Y,M,dSel).getDay()]+'</b> · '+(typeof v==="number"?(v>0?fn(v)+' yevmiye · '+tm(v*rateFor(k)):'gelmedi'):'girilmemiş')+(hh&&!hh.half?' · '+esc(hh.n):'')+(S.notes[k]?'<br>✎ '+esc(S.notes[k]):'')}
+function perfCalc(y,m){var n=new Date(y,m+1,0).getDate(),cur=(y===now.getFullYear()&&m===now.getMonth()),lim=cur?now.getDate():n,mk=0,at=0,wk=0,ot=0,miss=0,tot=0,wd=[0,0,0,0,0,0,0],wc=[0,0,0,0,0,0,0],d,k,v;
+ for(d=1;d<=lim;d++){k=key(y,m,d);v=S.days[k];if(typeof v!=="number")continue;tot+=v;var dw=(new Date(y,m,d).getDay()+6)%7;wd[dw]+=v;wc[dw]++;
+  if(workday(k)){mk++;if(v>0)at++}
+  if(v>0){wk++;if(v>1)ot++}else miss++}
+ var py=m?y:y-1,pm=m?m-1:11,pn=new Date(py,pm+1,0).getDate(),ptot=0,pc=false;
+ for(var e=1;e<=Math.min(lim,pn);e++){var pv=S.days[key(py,pm,e)];if(typeof pv==="number"){ptot+=pv;pc=true}}
+ return{mk:mk,at:at,wk:wk,ot:ot,miss:miss,tot:tot,wd:wd,wc:wc,pt:ptot,pc:pc}}
+function renderPerf(){var p=perfCalc(Y,M),el=$("perf"),hd='<div class="eh">Çalışma performansı · '+AY[M]+' '+Y+'</div>';
+ if(!p.mk&&!p.wk){el.innerHTML=hd+'<div class="es0" style="margin-top:6px">Bu ay için henüz veri yok.</div>';return}
+ var rate=p.mk?p.at/p.mk:0,pct=Math.round(rate*100),C=263.9,lab=pct>=95?"Mükemmel":pct>=85?"Çok iyi":pct>=70?"İyi":"Geliştirilebilir";
+ var avg=p.wk?p.tot/p.wk:0,orate=p.wk?Math.round(p.ot/p.wk*100):0,nm=["Pzt","Sal","Çar","Per","Cum","Cmt","Paz"];
+ var av=p.wd.map(function(sv,i){return p.wc[i]?sv/p.wc[i]:0}),mx=Math.max.apply(null,av.concat([1])),bi=-1,bv=0;
+ av.forEach(function(x,i){if(p.wc[i]>=2&&x>bv){bv=x;bi=i}});
+ var cmp="";if(p.pc){var df=p.tot-p.pt,pp=p.pt>0?Math.round(Math.abs(df)/p.pt*100):0;
+  cmp='<div class="pd">'+(df>=0?'<span class="up">▲</span> ':'<span class="dn">▼</span> ')+'Geçen ayın aynı gününe göre <b>'+(df>=0?"+":"−")+fn(Math.abs(df))+' yev.</b>'+(p.pt>0?' (%'+pp+(df>=0?' fazla':' az')+')':'')+'</div>'}
+ el.innerHTML=hd+'<div class="pf" style="margin-top:10px"><div class="ring"><svg viewBox="0 0 100 100" width="96" height="96"><circle cx="50" cy="50" r="42" fill="none" stroke="var(--ln)" stroke-width="9"/><circle cx="50" cy="50" r="42" fill="none" stroke="var(--ac)" stroke-width="9" stroke-linecap="round" stroke-dasharray="'+C+'" stroke-dashoffset="'+(C*(1-rate)).toFixed(1)+'" transform="rotate(-90 50 50)"/></svg><b>'+(p.mk?"%"+pct:"—")+'<small>'+(p.mk?lab:"devam")+'</small></b></div>'
+  +'<div class="pm"><div><span>Çalıştığın gün başına</span><b>'+fn(avg)+' yev.</b></div><div><span>Mesaili gün oranı</span><b>%'+orate+'</b></div><div><span>Gelinmeyen gün</span><b>'+p.miss+'</b></div></div></div>'+cmp
+  +'<div class="wk">'+av.map(function(x,i){return '<div class="'+(i===bi?'top':'')+'"><i style="height:'+Math.max(x/mx*78,6)+'%;'+(p.wc[i]?'':'opacity:.2')+'"></i>'+nm[i]+'</div>'}).join("")+'</div>'
+  +'<div class="lg" style="margin:6px 0 0">Haftanın günlerine göre ortalama yevmiye'+(bi>=0?' · en verimli: '+nm[bi]+' ('+fn(bv)+')':'')+' · devam oranı = çalışma günlerinde gelme</div>'}
 function workday(k){var d=new Date(utc(k));return d.getUTCDay()!==0&&!(H[k]&&!H[k].half)}
 function streaks(){var ks=Object.keys(S.days).filter(function(k){return typeof S.days[k]==="number"}).sort();if(!ks.length)return{cur:0,best:0};
  var t=ds(now),k=ks[0],run=0,best=0;
@@ -690,6 +753,8 @@ Array.prototype.forEach.call(document.querySelectorAll(".tbt"),function(b){b.onc
 $("qk").onclick=function(e){var b=e.target.closest("[data-q]");if(!b)return;
  if(b.dataset.q==="o"){Y=now.getFullYear();M=now.getMonth();render();openDay(now.getDate());return}
  S.days[ds(now)]=parseFloat(b.dataset.q);save();render();chkSoon()};
+$("chart").onclick=function(e){var m=e.target.closest("[data-cm]");if(m){cm=m.dataset.cm;renderChart();return}var r=e.target.closest("[data-i]");if(r){var x=CH[+r.dataset.i];chSel=x.y+"-"+x.m;renderChart()}};
+$("dchart").onclick=function(e){var r=e.target.closest("[data-d]");if(r){dSel=+r.dataset.d;renderDaily()}};
 $("tl").onclick=function(e){var b=e.target.closest("[data-tool]");if(b)openTool(b.dataset.tool)};
 $("mnw").onclick=function(e){var b=e.target.closest("[data-mo]");if(b&&!b.disabled){menuOff=+b.dataset.mo;renderMenu()}};
 $("updb").onclick=hardRefresh;$("nb").onclick=openNotes;
