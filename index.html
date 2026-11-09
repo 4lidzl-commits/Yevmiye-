@@ -100,6 +100,13 @@ input,select{border-radius:14px}.tb{border-radius:16px}
 .hero{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .eye{width:auto;height:42px;padding:0 14px;gap:7px;top:12px;right:12px;border-radius:15px;font-size:14px;font-weight:600;color:var(--on,#fff)}
 .eye span{line-height:1}
+.mn{background:var(--card);border-radius:22px;box-shadow:var(--sh);padding:14px 16px;margin-bottom:14px}
+.eh{font-size:14px;color:var(--mut);margin-bottom:2px}.eb{font-size:28px;font-weight:700;letter-spacing:-.3px;margin:2px 0 8px}.eb small{font-size:15px;font-weight:500;color:var(--mut)}.es0{font-size:14px;color:var(--mut);margin:6px 0 10px;line-height:1.45}
+.er{display:flex;justify-content:space-between;gap:8px;padding:9px 0;border-top:1px solid var(--ln);font-size:15px}.er b{font-weight:600;text-align:right}
+.prog{height:12px;border-radius:99px;background:var(--ln);overflow:hidden}.prog i{display:block;height:100%;background:var(--ac);border-radius:99px}
+.up{color:var(--ok)}.dn{color:var(--bad)}.fl{display:block;font-size:13px;color:var(--mut);margin-bottom:8px}.fl input{margin:4px 0 0}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}.chip{padding:11px 16px;border-radius:999px;border:1.5px solid var(--ln);background:var(--bg);color:var(--tx);font-size:15px;cursor:pointer}.chip.on{background:var(--ac);color:var(--on,#fff);border-color:var(--ac)}
+.ch button.on{background:var(--ac);color:var(--on,#fff);border-color:var(--ac)}
 @media print{.tp{display:block!important}.tabbar{display:none!important}}
 @media print{.noprint,.sh,#lk{display:none!important}body{background:#fff;color:#000}.d,.st,.lst,.bars{border-color:#999}}
 </style>
@@ -112,8 +119,11 @@ input,select{border-radius:14px}.tb{border-radius:16px}
 <div class="nav noprint"><button class="btn pvb">‹</button><b class="mtl"></b><button class="btn nxb">›</button></div>
 <div class="hero" id="hero"><button class="eye noprint" id="eye"></button><small id="hl">Bu ay net (ele geçen)</small><div class="big" id="earn"></div><small id="sub"></small></div>
 <div class="qk noprint" id="qk"></div>
+<div class="mn" id="goalc"></div>
+<div class="mn" id="payc"></div>
 <h2>Bu ayın özeti</h2>
 <div class="grid" id="stats"></div>
+<div class="mn" id="whyc" style="display:none"></div>
 
 <h2>Aylık kazanç (son 12 ay)</h2>
 <div id="chart"></div>
@@ -133,7 +143,7 @@ input,select{border-radius:14px}.tb{border-radius:16px}
 
 <script>
 var KEY="yevmiye-v2";
-var APP_VER="2.8";
+var APP_VER="2.9";
 
 
 function $(i){return document.getElementById(i)}
@@ -143,7 +153,7 @@ var KD={ek:"Ek ödeme",avans:"Avans / borç",kesinti:"Kesinti"};
 function load(){var s=null;try{s=JSON.parse(localStorage.getItem(KEY))}catch(e){}
  if(!s)s={};
  s.rates=(s.rates&&s.rates.length)?s.rates:[{from:"2000-01-01",rate:0}];
- s.days=s.days||{};s.notes=s.notes||{};s.moves=s.moves||[];s.pin=s.pin||"";s.lastBackup=s.lastBackup||0;s.hide=!!s.hide;s.name=s.name||"";s.nameAsked=!!s.nameAsked;s.theme=s.theme||"auto";return s}
+ s.days=s.days||{};s.notes=s.notes||{};s.moves=s.moves||[];s.pin=s.pin||"";s.lastBackup=s.lastBackup||0;s.hide=!!s.hide;s.name=s.name||"";s.nameAsked=!!s.nameAsked;s.theme=s.theme||"auto";s.pay=s.pay||[];s.goal=s.goal||0;s.why=s.why||{};return s}
 var S=load(),now=new Date(),Y=now.getFullYear(),M=now.getMonth(),sel=0;
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){$("msg").textContent="Kaydedilemedi: tarayıcı depolaması kapalı ya da dolu"}}
 function pad(n){return String(n).padStart(2,"0")}
@@ -209,7 +219,7 @@ function render(){
  $("cal").innerHTML=h;
  var pre=Y+"-"+pad(M+1),ms=S.moves.filter(function(x){return x.date.slice(0,7)===pre}).sort(function(a,b){return a.date<b.date?-1:1});
  $("mv").innerHTML=ms.length?ms.map(function(x){var p=x.kind==="ek";return '<div><span>'+(+x.date.slice(8))+" "+AY[M].slice(0,3)+" · "+KD[x.kind]+(x.note?'<small>'+esc(x.note)+'</small>':'')+'</span><span style="color:var(--'+(p?"ok":"bad")+')"><b>'+(p?"+":"−")+tm(x.amt)+'</b> <button class="x noprint" data-id="'+x.id+'">✕</button></span></div>'}).join(""):'<div><span style="color:var(--mut)">Bu ay kayıt yok</span></div>';
- renderChart();renderQuick();$("eye").innerHTML=ic(S.hide?"eyeoff":"eye",20)+"<span>"+(S.hide?"Göster":"Gizle")+"</span>";$("gr").innerHTML='<small>'+now.getDate()+" "+AY[now.getMonth()]+" "+GNF[now.getDay()]+'</small>'+(S.name?"Merhaba "+esc(S.name):"Merhaba");
+ renderChart();renderQuick();renderGoal();renderPayc();renderWhy();$("eye").innerHTML=ic(S.hide?"eyeoff":"eye",20)+"<span>"+(S.hide?"Göster":"Gizle")+"</span>";$("gr").innerHTML='<small>'+now.getDate()+" "+AY[now.getMonth()]+" "+GNF[now.getDay()]+'</small>'+(S.name?"Merhaba "+esc(S.name):"Merhaba");
 }
 
 var cm="g",chSel=null,lastYM="",CH=[],dSel=0,dYM="";
@@ -248,20 +258,50 @@ function streaks(){var ks=Object.keys(S.days).filter(function(k){return typeof S
 
 
 
+var WHY=["Rapor","İzin","Mazeret","Hava","Diğer"],QV=[0,.5,1,1.5,2,2.5,3];
+function pn(id){var v=parseFloat(String($(id).value).replace(",","."));return isFinite(v)?v:NaN}
+function mname(ym){return AY[+ym.slice(5)-1]+" "+ym.slice(0,4)}
+function payFor(ym){return S.pay.filter(function(p){return p.for===ym}).reduce(function(a,p){return a+p.amt},0)}
+function remDays(){var n=new Date(Y,M+1,0).getDate(),t=ds(now),c=0;for(var d=1;d<=n;d++){var k=key(Y,M,d);if((k>t||(k===t&&typeof S.days[k]!=="number"))&&workday(k))c++}return c}
+function openDay(d){var k=key(Y,M,d),h=H[k],cur=S.days[k];sel=d;
+ openSheet('<h3>'+d+' '+AY[M]+' '+Y+' · '+GN[(new Date(Y,M,d).getDay()+6)%7]+'</h3>'+(h?'<p class="hn">'+(h.dini?"🌙 ":"🇹🇷 ")+esc(h.n)+(h.half?" (yarım gün)":"")+'</p>':'')
+ +'<div class="ch">'+QV.map(function(v){return '<button data-v="'+v+'"'+(cur===v?' class="on"':'')+'>'+fn(v)+'</button>'}).join("")+'<button class="x" data-v="x">Sil</button></div>'
+ +'<div class="rr"><input id="cv" type="text" inputmode="decimal" aria-label="Kendi tutarın" placeholder="Kendi tutarın (örn. 1,25)" value="'+(typeof cur==="number"&&QV.indexOf(cur)<0?fn(cur):"")+'"><button class="btn" id="cb">Ekle</button></div>'
+ +(cur===0?'<p class="lg">Gelmeme nedeni</p><div class="chips">'+WHY.map(function(w){return '<button class="chip'+(S.why[k]===w?' on':'')+'" data-wy="'+w+'">'+w+'</button>'}).join("")+'</div>':'')
+ +'<input id="nt" aria-label="Not" placeholder="Not (neden gelmedim, hangi iş…)" value="'+esc(S.notes[k]||"")+'"><button class="sv g" id="ns">Sadece notu kaydet</button>');
+ function sn(){var t=$("nt").value.trim();if(t)S.notes[k]=t;else delete S.notes[k]}
+ function put(n){if(n===null)delete S.days[k];else S.days[k]=n;if(n!==0)delete S.why[k];sn();save();render();if(n===0)openDay(d);else closeSheet()}
+ qa("[data-v]",function(b){b.onclick=function(){put(b.dataset.v==="x"?null:parseFloat(b.dataset.v))}});
+ $("cb").onclick=function(){var x=parseFloat(String($("cv").value).replace(",","."));if(!(x>=0&&x<=10)){$("cv").style.borderColor="var(--bad)";return}put(Math.round(x*100)/100)};
+ qa("[data-wy]",function(b){b.onclick=function(){if(S.why[k]===b.dataset.wy)delete S.why[k];else S.why[k]=b.dataset.wy;sn();save();render();openDay(d)}});
+ $("ns").onclick=function(){sn();save();closeSheet();render()}}
+function renderGoal(){var s=stats(Y,M),el=$("goalc"),cur=(Y===now.getFullYear()&&M===now.getMonth());
+ if(!S.goal){el.innerHTML='<div class="eh">Aylık hedef</div><div class="es0">Bir hedef koy, ilerlemeni burada gör.</div><button class="btn" data-g="1">Hedef koy</button>';return}
+ var pc=Math.max(0,Math.min(100,Math.round(s.net/S.goal*100))),left=S.goal-s.net,rd=cur?remDays():0;
+ el.innerHTML='<div class="eh">Aylık hedef · '+AY[M]+'</div><div class="eb">'+tm(s.net)+' <small>/ '+tm(S.goal)+'</small></div><div class="prog" role="progressbar" aria-valuenow="'+pc+'" aria-valuemin="0" aria-valuemax="100"><i style="width:'+pc+'%"></i></div><div class="es0">%'+pc+' · '+(left<=0?'Hedefe ulaştın 🎉':'kalan '+tm(left)+(rd>0?' · kalan '+rd+' iş gününde günde ≈ '+tm(left/rd):''))+'</div><button class="btn" data-g="1">Hedefi değiştir</button>'}
+function openGoal(){openSheet('<button class="btn" id="bb" style="margin-bottom:10px">‹ Kapat</button><h3>Aylık net kazanç hedefi</h3><label class="fl">Hedef (₺)<input id="gv" type="text" inputmode="decimal" value="'+(S.goal||"")+'"></label><button class="sv" id="gs">Kaydet</button>'+(S.goal?'<button class="sv g" id="gx">Hedefi kaldır</button>':''));
+ $("bb").onclick=closeSheet;$("gs").onclick=function(){var v=pn("gv");if(!(v>0)){$("gv").style.borderColor="var(--bad)";return}S.goal=Math.round(v);save();closeSheet();render()};
+ if(S.goal)$("gx").onclick=function(){S.goal=0;save();closeSheet();render()}}
+function renderPayc(){var s=stats(Y,M),ym=Y+"-"+pad(M+1),cur=(Y===now.getFullYear()&&M===now.getMonth()),paid=payFor(ym),df=paid-s.net,st;
+ if(!paid)st="Bu ay için yatan maaş girilmedi.";else if(Math.abs(df)<=50)st='<span class="up">Tamam ✓</span> hesabınla uyuşuyor.';else if(df<0)st='<span class="dn">Eksik ödeme olabilir:</span> hesabına göre '+tm(-df)+' eksik yatmış.';else st='Hesabından '+tm(df)+' fazla yatmış.';
+ $("payc").innerHTML='<div class="eh">Maaş kontrolü · '+AY[M]+' '+Y+'</div><div class="er" style="border:0"><span>Hesabıma göre net'+(cur?' (şimdiye kadar)':'')+'</span><b>'+tm(s.net)+'</b></div><div class="er"><span>Yatan maaş</span><b>'+(paid?tm(paid):'—')+'</b></div><div class="es0">'+st+(cur&&paid?' Ay bitince tekrar bak.':'')+'</div><button class="btn" data-p="1">Maaş yattı, gir</button>'}
+function openPay(ym){function draw(){var list=S.pay.filter(function(p){return p.for===ym});
+ openSheet('<button class="btn" id="bb" style="margin-bottom:10px">‹ Kapat</button><h3>Maaş yattı</h3><label class="fl">Yatan tutar (₺)<input id="pa" type="text" inputmode="decimal"></label><label class="fl">Hangi ayın maaşı<input id="pm" type="month" value="'+ym+'"></label><label class="fl">Yattığı tarih<input id="pd2" type="date" value="'+ds(now)+'"></label><button class="sv" id="ps">Kaydet</button>'
+  +(list.length?'<h3 style="margin-top:14px">'+mname(ym)+' için girilenler</h3><div class="lst">'+list.map(function(p){return '<div><span>'+fmtD(p.date)+'</span><span><b>'+tm(p.amt)+'</b> <button class="x" data-id="'+p.id+'" aria-label="Sil">✕</button></span></div>'}).join("")+'</div>':''));
+ $("bb").onclick=closeSheet;
+ $("ps").onclick=function(){var a=pn("pa"),f=$("pm").value,d=$("pd2").value;if(!(a>0)||!f||!d){$("pa").style.borderColor="var(--bad)";return}S.pay.push({id:Date.now()+Math.floor(Math.random()*1000),date:d,for:f,amt:a});save();closeSheet();render()};
+ qa("[data-id]",function(b){b.onclick=function(){if(!confirm("Bu kayıt silinsin mi?"))return;S.pay=S.pay.filter(function(p){return String(p.id)!==b.dataset.id});save();render();draw()}})}
+ draw()}
+function renderWhy(){var n=new Date(Y,M+1,0).getDate(),c={},tot=0,el=$("whyc");
+ for(var d=1;d<=n;d++){var k=key(Y,M,d);if(S.days[k]===0){var w=S.why[k]||"Belirtilmedi";c[w]=(c[w]||0)+1;tot++}}
+ if(!tot){el.style.display="none";return}el.style.display="";
+ el.innerHTML='<div class="eh">Gelinmeyen günlerin nedeni · '+AY[M]+'</div>'+Object.keys(c).sort(function(x,y){return c[y]-c[x]}).map(function(w,i){return '<div class="er"'+(i?'':' style="border:0"')+'><span>'+esc(w)+'</span><b>'+c[w]+' gün</b></div>'}).join("")}
 function openSheet(h){$("pn").innerHTML=h;$("sh").classList.add("on")}
 function closeSheet(){$("sh").classList.remove("on")}
 $("sh").onclick=function(e){if(e.target===this)closeSheet()};
 function qa(s,f){Array.prototype.forEach.call($("pn").querySelectorAll(s),f)}
 
-function openDay(d){var k=key(Y,M,d),h=H[k];sel=d;
- openSheet('<h3>'+d+' '+AY[M]+' '+Y+' · '+GN[(new Date(Y,M,d).getDay()+6)%7]+'</h3>'+(h?'<p class="hn">'+(h.dini?"🌙 ":"🇹🇷 ")+esc(h.n)+(h.half?" (yarım gün)":"")+'</p>':'')
- +'<div class="ch">'+[0,.5,1,1.5,2,2.5,3].map(function(v){return '<button data-v="'+v+'">'+fn(v)+'</button>'}).join("")+'<button class="x" data-v="x">Sil</button></div>'
- +'<div class="rr"><input id="cv" type="text" inputmode="decimal" placeholder="Kendi tutarın (örn. 1,25)" value="'+(typeof S.days[k]==="number"&&[0,.5,1,1.5,2,2.5,3].indexOf(S.days[k])<0?fn(S.days[k]):"")+'"><button class="btn" id="cb">Ekle</button></div>'
- +'<input id="nt" placeholder="Not (neden gelmedim, hangi iş…)" value="'+esc(S.notes[k]||"")+'"><button class="sv g" id="ns">Sadece notu kaydet</button>');
- function sn(){var t=$("nt").value.trim();if(t)S.notes[k]=t;else delete S.notes[k]}
- qa("[data-v]",function(b){b.onclick=function(){var v=b.dataset.v;if(v==="x")delete S.days[k];else S.days[k]=parseFloat(v);sn();save();closeSheet();render()}});
- $("cb").onclick=function(){var x=parseFloat(String($("cv").value).replace(",","."));if(!(x>=0&&x<=10)){$("cv").style.borderColor="var(--bad)";return}S.days[k]=Math.round(x*100)/100;sn();save();closeSheet();render()};
- $("ns").onclick=function(){sn();save();closeSheet();render()}}
+
 
 function openMove(){var kind="ek",def=(Y===now.getFullYear()&&M===now.getMonth())?ds(now):key(Y,M,1);
  openSheet('<h3>Hareket ekle</h3><div class="seg"><button data-k="ek" class="on">Ek ödeme +</button><button data-k="avans">Avans/borç −</button><button data-k="kesinti">Kesinti −</button></div><input id="ma" type="number" inputmode="decimal" placeholder="Tutar ₺"><input id="mn" placeholder="Not (yemek, yol, prim…)"><input id="md" type="date" value="'+def+'"><button class="sv" id="mk">Ekle</button>');
@@ -434,6 +474,8 @@ var sx=0,sy=0;$("t2").addEventListener("touchstart",function(e){sx=e.touches[0].
 $("t2").addEventListener("touchend",function(e){var t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5)mvMonth(dx<0?1:-1)},{passive:true});
 function toggleHide(){S.hide=!S.hide;save();render()}
 $("eye").onclick=toggleHide;
+$("goalc").onclick=function(e){if(e.target.closest("[data-g]"))openGoal()};
+$("payc").onclick=function(e){if(e.target.closest("[data-p]"))openPay(Y+"-"+pad(M+1))};
 $("hero").onclick=function(e){if(e.target.closest("#eye,#fx"))return;toggleHide()};
 document.addEventListener("visibilitychange",function(){if(!document.hidden){if(!hid||Date.now()-hid>12e4){S.hide=true}render()}});
 applyTheme();
