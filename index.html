@@ -143,6 +143,7 @@ input,select{border-radius:14px}.tb{border-radius:16px}
 <h2>Hızlı ekle</h2>
 <div class="chips" id="gq"></div>
 <div class="mn" id="gcat" style="display:none"></div>
+<div class="mn" id="ggraf"></div>
 <h2>Giderler</h2>
 <div id="gl"></div>
 <button class="sv" id="gadd"><span data-ic="plus" data-sz="20"></span>Gider ekle</button>
@@ -168,7 +169,7 @@ var KD={ek:"Ek ödeme",avans:"Avans / borç",kesinti:"Kesinti"};
 function load(){var s=null;try{s=JSON.parse(localStorage.getItem(KEY))}catch(e){}
  if(!s)s={};
  s.rates=(s.rates&&s.rates.length)?s.rates:[{from:"2000-01-01",rate:0}];
- s.days=s.days||{};s.notes=s.notes||{};s.moves=s.moves||[];s.pin=s.pin||"";s.lastBackup=s.lastBackup||0;s.hide=!!s.hide;s.name=s.name||"";s.nameAsked=!!s.nameAsked;s.theme=s.theme||"auto";s.pay=s.pay||[];s.debts=s.debts||[];s.exp=s.exp||[];s.rec=s.rec||[];s.goal=s.goal||0;s.why=s.why||{};return s}
+ s.days=s.days||{};s.notes=s.notes||{};s.moves=s.moves||[];s.pin=s.pin||"";s.lastBackup=s.lastBackup||0;s.hide=!!s.hide;s.name=s.name||"";s.nameAsked=!!s.nameAsked;s.theme=s.theme||"auto";s.pay=s.pay||[];s.debts=s.debts||[];s.exp=s.exp||[];s.bud=s.bud||{};s.bpay=s.bpay||[];s.rec=s.rec||[];s.goal=s.goal||0;s.why=s.why||{};return s}
 var S=load(),now=new Date(),Y=now.getFullYear(),M=now.getMonth(),sel=0;
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){$("msg").textContent="Kaydedilemedi: tarayıcı depolaması kapalı ya da dolu"}}
 function pad(n){return String(n).padStart(2,"0")}
@@ -234,7 +235,7 @@ function render(){
  $("cal").innerHTML=h;
  var pre=Y+"-"+pad(M+1),ms=S.moves.filter(function(x){return x.date.slice(0,7)===pre}).sort(function(a,b){return a.date<b.date?-1:1});
  $("mv").innerHTML=ms.length?ms.map(function(x){var p=x.kind==="ek";return '<div><span>'+(+x.date.slice(8))+" "+AY[M].slice(0,3)+" · "+KD[x.kind]+(x.note?'<small>'+esc(x.note)+'</small>':'')+'</span><span style="color:var(--'+(p?"ok":"bad")+')"><b>'+(p?"+":"−")+tm(x.amt)+'</b> <button class="x noprint" data-id="'+x.id+'">✕</button></span></div>'}).join(""):'<div><span style="color:var(--mut)">Bu ay kayıt yok</span></div>';
- renderChart();renderQuick();renderGoal();renderPayc();renderWhy();renderAv();renderGider();$("eye").innerHTML=ic(S.hide?"eyeoff":"eye",20)+"<span>"+(S.hide?"Göster":"Gizle")+"</span>";$("gr").innerHTML='<small>'+now.getDate()+" "+AY[now.getMonth()]+" "+GNF[now.getDay()]+'</small>'+(S.name?"Merhaba "+esc(S.name):"Merhaba");
+ renderChart();renderQuick();renderGoal();renderPayc();renderWhy();renderAv();renderGider();renderGgraf();$("eye").innerHTML=ic(S.hide?"eyeoff":"eye",20)+"<span>"+(S.hide?"Göster":"Gizle")+"</span>";$("gr").innerHTML='<small>'+now.getDate()+" "+AY[now.getMonth()]+" "+GNF[now.getDay()]+'</small>'+(S.name?"Merhaba "+esc(S.name):"Merhaba");
 }
 
 var cm="g",chSel=null,lastYM="",CH=[],dSel=0,dYM="";
@@ -290,10 +291,15 @@ function openDay(d){var k=key(Y,M,d),h=H[k],cur=S.days[k];sel=d;
  $("cb").onclick=function(){var x=parseFloat(String($("cv").value).replace(",","."));if(!(x>=0&&x<=10)){$("cv").style.borderColor="var(--bad)";return}put(Math.round(x*100)/100)};
  qa("[data-wy]",function(b){b.onclick=function(){if(S.why[k]===b.dataset.wy)delete S.why[k];else S.why[k]=b.dataset.wy;sn();save();render();openDay(d)}});
  $("ns").onclick=function(){sn();save();closeSheet();render()}}
+function estNet(){var n=new Date(Y,M+1,0).getDate(),t=ds(now),sw=0,nm=0,gn=0;
+ for(var d=1;d<=n;d++){var k=key(Y,M,d),v=S.days[k];if(typeof v==="number"){gn+=v*rateFor(k);if(workday(k)){nm++;sw+=v}}}
+ if(nm<3)return{net:undefined};var avg=sw/nm,rg=0,ms=stats(Y,M);
+ for(var d2=1;d2<=n;d2++){var k2=key(Y,M,d2);if((k2>t||(k2===t&&typeof S.days[k2]!=="number"))&&workday(k2))rg+=avg*rateFor(k2)}
+ return{net:gn+rg+ms.ek-ms.av-ms.ke}}
 function renderGoal(){var s=stats(Y,M),el=$("goalc"),cur=(Y===now.getFullYear()&&M===now.getMonth());
  if(!S.goal){el.innerHTML='<div class="eh">Aylık hedef</div><div class="es0">Bir hedef koy, ilerlemeni burada gör.</div><button class="btn" data-g="1">Hedef koy</button>';return}
- var pc=Math.max(0,Math.min(100,Math.round(s.net/S.goal*100))),left=S.goal-s.net,rd=cur?remDays():0;
- el.innerHTML='<div class="eh">Aylık hedef · '+AY[M]+'</div><div class="eb">'+tm(s.net)+' <small>/ '+tm(S.goal)+'</small></div><div class="prog" role="progressbar" aria-valuenow="'+pc+'" aria-valuemin="0" aria-valuemax="100"><i style="width:'+pc+'%"></i></div><div class="es0">%'+pc+' · '+(left<=0?'Hedefe ulaştın 🎉':'kalan '+tm(left)+(rd>0?' · kalan '+rd+' iş gününde günde ≈ '+tm(left/rd):''))+'</div><button class="btn" data-g="1">Hedefi değiştir</button>'}
+ var pc=Math.max(0,Math.min(100,Math.round(s.net/S.goal*100))),left=S.goal-s.net,rd=cur?remDays():0,e=cur?estNet():null,fc="";if(e&&left>0&&e.net!==undefined){fc=e.net>=S.goal?"Bu tempoyla ay sonunda hedefe ulaşırsın (≈ "+tm(e.net)+")":"Bu tempoyla ay sonunda ≈ "+tm(S.goal-e.net)+" eksik kalırsın"}
+ el.innerHTML='<div class="eh">Aylık hedef · '+AY[M]+'</div><div class="eb">'+tm(s.net)+' <small>/ '+tm(S.goal)+'</small></div><div class="prog" role="progressbar" aria-valuenow="'+pc+'" aria-valuemin="0" aria-valuemax="100"><i style="width:'+pc+'%"></i></div><div class="es0">%'+pc+' · '+(left<=0?'Hedefe ulaştın 🎉':'kalan '+tm(left)+(rd>0?' · kalan '+rd+' iş gününde günde ≈ '+tm(left/rd):''))+(fc?'<br>'+fc:'')+'</div><button class="btn" data-g="1">Hedefi değiştir</button>'}
 function openGoal(){openSheet('<button class="btn" id="bb" style="margin-bottom:10px">‹ Kapat</button><h3>Aylık net kazanç hedefi</h3><label class="fl">Hedef (₺)<input id="gv" type="text" inputmode="decimal" value="'+(S.goal||"")+'"></label><button class="sv" id="gs">Kaydet</button>'+(S.goal?'<button class="sv g" id="gx">Hedefi kaldır</button>':''));
  $("bb").onclick=closeSheet;$("gs").onclick=function(){var v=pn("gv");if(!(v>0)){$("gv").style.borderColor="var(--bad)";return}S.goal=Math.round(v);save();closeSheet();render()};
  if(S.goal)$("gx").onclick=function(){S.goal=0;save();closeSheet();render()}}
@@ -313,6 +319,7 @@ function renderWhy(){var n=new Date(Y,M+1,0).getDate(),c={},tot=0,el=$("whyc");
  el.innerHTML='<div class="eh">Gelinmeyen günlerin nedeni · '+AY[M]+'</div>'+Object.keys(c).sort(function(x,y){return c[y]-c[x]}).map(function(w,i){return '<div class="er"'+(i?'':' style="border:0"')+'><span>'+esc(w)+'</span><b>'+c[w]+' gün</b></div>'}).join("")}
 function monthsAll(){var ks=Object.keys(S.days).sort(),y=ks.length?+ks[0].slice(0,4):now.getFullYear(),m=ks.length?+ks[0].slice(5,7)-1:now.getMonth(),out=[],ey=now.getFullYear(),em=now.getMonth();
  while((y<ey||(y===ey&&m<=em))&&out.length<240){out.push([y,m]);m++;if(m>11){m=0;y++}}return out}
+function budAlerts(){var ym=Y+"-"+pad(M+1),by={};expsOf(ym).forEach(function(e){by[e.cat]=(by[e.cat]||0)+e.amt});return Object.keys(S.bud).filter(function(c){return by[c]>S.bud[c]}).map(function(c){return c})}
 function renderAv(){var a=0,v=0,i;S.debts.forEach(function(d){if(!d.paid){if(d.kind==="alacak")a+=d.amt;else v+=d.amt}});
  var net=a-v;
  $("adc").innerHTML='<div class="eh">'+(net>=0?'Net alacağın':'Net borcun')+'</div><div class="eb">'+tm(Math.abs(net))+'</div><div class="er"><span>Bana borçlu olanlar</span><b>'+tm(a)+'</b></div><div class="er"><span>Benim borcum</span><b>'+tm(v)+'</b></div>';
@@ -341,15 +348,33 @@ function openAv(){var kind="alacak";
 var CATS=["Yemek","Yol","Market","Fatura","Kira","Sağlık","Giyim","Diğer"];
 function expsOf(ym){var out=S.exp.filter(function(e){return e.date.slice(0,7)===ym}).map(function(e){return{id:e.id,date:e.date,cat:e.cat,amt:e.amt,note:e.note,rec:false}});
  S.rec.forEach(function(r){if(r.from<=ym)out.push({id:r.id,date:ym+"-01",cat:r.cat,amt:r.amt,note:r.note,rec:true})});return out}
+function renderGgraf(){var el=$("ggraf");if(!el)return;var ms=[],i,y,m;
+ for(i=5;i>=0;i--){y=Y;m=M-i;while(m<0){m+=12;y--}var ym=y+"-"+pad(m+1),t=0;expsOf(ym).forEach(function(e){t+=e.amt});ms.push({ym:ym,m:m,t:t,n:stats(y,m).net})}
+ var mx=Math.max.apply(null,ms.map(function(x){return Math.max(x.t,x.n)}).concat([1])),W=340,HT=150,bw=W/6,ch=HT-30;
+ var g='<svg viewBox="0 0 '+W+' '+HT+'" width="100%" role="img" aria-label="Son 6 ay gider ve net kazanç grafiği">';
+ ms.forEach(function(x,j){var cx=j*bw+bw/2,hn=x.n/mx*ch,ht=x.t/mx*ch,on=j===5;
+  g+='<rect x="'+(cx-bw*.36)+'" y="'+(ch-hn)+'" width="'+bw*.32+'" height="'+Math.max(hn,2)+'" rx="5" fill="var(--ln)"/>';
+  g+='<rect x="'+(cx+bw*.04)+'" y="'+(ch-ht)+'" width="'+bw*.32+'" height="'+Math.max(ht,2)+'" rx="5" fill="var(--ac)" opacity="'+(on?1:.55)+'"/>';
+  g+='<text x="'+cx+'" y="'+(HT-6)+'" text-anchor="middle" font-size="10" fill="'+(on?"var(--ac)":"var(--mut)")+'" font-weight="'+(on?700:400)+'">'+AY[x.m].slice(0,3)+'</text>'});
+ g+='</svg>';
+ el.innerHTML='<div class="eh">Son 6 ay · gider (turuncu) ve net kazanç (gri)</div><div style="margin-top:6px">'+g+'</div>'}
 function renderGider(){var s=stats(Y,M),ym=Y+"-"+pad(M+1),L=expsOf(ym),tot=0,by={};L.forEach(function(e){tot+=e.amt;by[e.cat]=(by[e.cat]||0)+e.amt});
  var left=s.net-tot,pc=tot>0?(s.net>0?Math.min(100,Math.round(tot/s.net*100)):100):0;
  $("gsum").innerHTML='<div class="eh">Toplam gider · '+AY[M]+' '+Y+'</div><div class="eb">'+tm(tot)+'</div><div class="prog" role="progressbar" aria-label="Giderin kazanca oranı" aria-valuenow="'+pc+'" aria-valuemin="0" aria-valuemax="100"><i style="width:'+pc+'%"></i></div>'
   +'<div class="er" style="border:0;margin-top:8px"><span>Net kazanç</span><b>'+tm(s.net)+'</b></div><div class="er"><span>Ele kalan</span><b class="'+(left<0?'dn':'')+'">'+tm(left)+'</b></div>'+(s.net>0&&tot>0?'<div class="er"><span>Giderin kazancına oranı</span><b>%'+Math.round(tot/s.net*100)+'</b></div>':'');
  $("gq").innerHTML=CATS.map(function(c){return '<button class="chip" data-gc="'+c+'">＋ '+c+'</button>'}).join("");
  var ks=Object.keys(by).sort(function(a,b){return by[b]-by[a]}),ce=$("gcat");ce.style.display=ks.length?"":"none";
- ce.innerHTML='<div class="eh">Kategorilere göre</div>'+ks.map(function(c){var w=Math.round(by[c]/tot*100);return '<div style="margin-top:10px"><div style="display:flex;justify-content:space-between;font-size:15px"><span>'+esc(c)+'</span><b>'+tm(by[c])+' <small style="color:var(--mut);font-weight:400">%'+w+'</small></b></div><div class="prog s"><i style="width:'+w+'%"></i></div></div>'}).join("");
+ var allc=CATS.filter(function(c){return by[c]||S.bud[c]});
+ ce.innerHTML='<div class="eh">Kategorilere göre · '+AY[M]+'</div>'+(allc.length?allc.map(function(c){var v=by[c]||0,lim=S.bud[c]||0,w=lim?Math.min(100,Math.round(v/lim*100)):(tot?Math.round(v/tot*100):0),over=lim&&v>lim;
+  return '<div style="margin-top:10px"><div style="display:flex;justify-content:space-between;font-size:15px"><span>'+esc(c)+'</span><b class="'+(over?'dn':'')+'">'+tm(v)+(lim?' <small style="color:var(--mut);font-weight:400">/ '+tm(lim)+'</small>':' <small style="color:var(--mut);font-weight:400">%'+Math.round(v/tot*100)+'</small>')+'</b></div><div class="prog s"><i style="width:'+w+'%;'+(over?'background:var(--bad)':'')+'"></i></div>'+(over?'<div class="dn" style="font-size:12px;margin-top:3px">Limit aşıldı: '+tm(v-lim)+' fazla</div>':'')+'</div>'}).join(""):'')+'<button class="btn" id="gbud" style="margin-top:12px">Kategori limiti koy</button>';
+ if($("gbud"))$("gbud").onclick=openBud;
  L.sort(function(a,b){return a.date<b.date?1:a.date>b.date?-1:b.id-a.id});
  $("gl").innerHTML=L.length?'<div class="lst">'+L.map(function(e){return '<div><span>'+esc(e.cat)+'<small>'+(e.rec?'↻ her ay':fmtD(e.date))+(e.note?' · '+esc(e.note):'')+'</small></span><span><b>'+tm(e.amt)+'</b> <button class="x" data-gx="'+e.id+'" aria-label="Sil">✕</button></span></div>'}).join("")+'</div>':'<p class="lg">Bu ay için gider girilmemiş.</p>'}
+function openBud(){var cat=CATS[0];
+ function draw(){openSheet('<button class="btn" id="bb" style="margin-bottom:10px">‹ Kapat</button><h3>Kategori limitleri</h3><p class="lg">Aylık en fazla ne kadar harcamak istediğini gir. Aşınca uyarı çıkar.</p>'+CATS.map(function(c){return '<div class="rr"><span>'+c+'</span><input type="text" inputmode="decimal" data-bl="'+c+'" value="'+(S.bud[c]||"")+'" placeholder="Limit yok" style="margin:0"></div>'}).join("")+'<button class="sv" id="bsv">Kaydet</button>');
+  $("bb").onclick=closeSheet;
+  $("bsv").onclick=function(){qa("[data-bl]",function(i){var v=parseFloat(String(i.value).replace(",","."));if(v>0)S.bud[i.dataset.bl]=Math.round(v);else delete S.bud[i.dataset.bl]});save();closeSheet();render()}}
+ draw()}
 function openGider(cat){var rec=false;
  openSheet('<button class="btn" id="bb" style="margin-bottom:10px">‹ Kapat</button><h3>Gider ekle</h3><div class="chips" id="gcs">'+CATS.map(function(c){return '<button class="chip'+(c===cat?' on':'')+'" data-c="'+c+'">'+c+'</button>'}).join("")+'</div><label class="fl">Tutar (₺)<input id="ga" type="text" inputmode="decimal"></label><input id="gn" placeholder="Not (isteğe bağlı)" maxlength="40" aria-label="Not"><label class="fl">Tarih<input id="gd" type="date" value="'+(Y===now.getFullYear()&&M===now.getMonth()?ds(now):key(Y,M,1))+'"></label><div class="chips"><button class="chip" id="grc" aria-pressed="false">↻ Her ay tekrar etsin (kira, fatura…)</button></div><button class="sv" id="gsv">Kaydet</button>');
  $("bb").onclick=closeSheet;
@@ -392,6 +417,8 @@ function openThemes(){
 function openBackup(){
  openSheet(bb()+'<h3>Yedek</h3><button class="sv g" id="bk">'+ic("save",18)+'Yedek al (dosya)</button><button class="sv g" id="rs">'+ic("folder",18)+'Yedekten geri yükle</button><input id="rf" type="file" accept=".json,application/json" style="display:none"><p class="lg">Telefon değiştirirsen ya da tarayıcı verisini silersen yedekten geri getirirsin.</p>');
  $("bb").onclick=openSet;
+ if(navigator.share&&navigator.canShare){var sb=document.createElement("button");sb.className="sv g";sb.id="bsh";sb.innerHTML=ic("share",20)+"Yedeği paylaş (WhatsApp, Drive…)";$("bk").after(sb);
+   sb.onclick=function(){var f=new File([JSON.stringify(S)],"yevmiye-yedek-"+ds(now)+".json",{type:"application/json"});if(navigator.canShare({files:[f]}))navigator.share({files:[f],title:"Yevmiye yedeği"}).catch(function(){})}}
  $("bk").onclick=function(){S.lastBackup=Date.now();save();dl("yevmiye-yedek-"+ds(now)+".json",JSON.stringify(S),"application/json");$("msg").textContent=""};
  $("rs").onclick=function(){$("rf").click()};
  $("rf").onchange=function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var o=JSON.parse(r.result);if(!o.days||!o.rates)throw 0;
